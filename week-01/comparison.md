@@ -25,10 +25,10 @@
 
 | Case | Input | Manual output | Rocket output | Spec says | Match? |
 | --- | --- | --- | --- | --- | --- |
-| A | `85, 23, 45, 90, 92` | | | avg 67.00 · high 92 · low 23 · pass 60.0% | |
-| B | `88, 47, -5, 101, abc, 73, 50, , 100` | | | avg 71.60 · high 100 · low 47 · pass 80.0% | |
-| C | `10, 20, 30` | | | avg 20.00 · high 30 · low 10 · pass 0.0% | |
-| D | `abc, , xyz` | | | clear message, no crash | |
+| A | `85, 23, 45, 90, 92` | avg 67 · high 92 · low 23 · pass 60.0% | avg 67 · high 92 · low 23 · pass 60.0%  | avg 67.00 · high 92 · low 23 · pass 60.0% | Yes |
+| B | `88, 47, -5, 101, abc, 73, 50, , 100` | avg 71.60 · high 100 · low 47 · pass 80.0% | avg 71.60 · high 100 · low 47 · pass 80.0% | avg 71.60 · high 100 · low 47 · pass 80.0% | Yes |
+| C | `10, 20, 30` | avg 20.00 · high 30 · low 10 · pass 0.0% | avg 20.00 · high 30 · low 10 · pass 0.0% | avg 20.00 · high 30 · low 10 · pass 0.0% | Yes |
+| D | `abc, , xyz` | clear message, no crash | No valid marks, no crash | clear message, no crash | Yes |
 
 ## 3. What the AI added that I never asked for
 
