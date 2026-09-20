@@ -39,25 +39,28 @@ be checked:
 **Prompt sent** (should be exactly one sentence):
 
 ```
-
+Write Python code to analyze student marks.
 ```
 
 **Assumptions the AI made that I never gave it** — list them, one per line. A data format, a pass
 threshold, a rounding rule, an input method, an invented feature all count.
 
-1.
-2.
-3.
+1. The AI assumed that student marks would be stored by subject and could be loaded from a CSV file. 
+2. It also assumed that the pass mark is 40 and added its own grading system. 
+3. It included extra features such as letter grades, class ranking, subject statistics, and grade distribution.
 
 **Questions it should have asked and did not:**
 
-1.
-2.
+1. It should have asked what function name and parameters were required, what the pass mark should be, what output should be returned, and how invalid input should be handled.
+2. 
 
 **Is the function named `analyze_marks` with the required signature?** yes / no — if no, what is it
-called:
+called:  No. It did not implement the required analyze_marks(marks, pass_mark=50) function.
+
 
 **First impression before testing** (one sentence — you will compare this with section 6 later):
+
+The prompt was too vague, so the AI made many assumptions and produced a more complex program than the task required.
 
 ---
 
@@ -66,18 +69,24 @@ called:
 **Prompt sent** (paste it in full, including any substitutions):
 
 ```
-
+You are a Python developer. Implement analyze_marks(marks, pass_mark=50). Return
+average, highest, lowest, and pass_rate in a dictionary. Accept marks from 0 to 100;
+raise ValueError for an empty list, non-numeric values, or out-of-range values. Use
+no external libraries. Return code plus a short explanation.
 ```
 
 **What B fixed compared to A:**
 
-1.
-2.
+1. It gave the exact function name and signature: analyze_marks(marks, pass_mark=50).
+2. It clearly specified the required return values: average, highest, lowest, and pass_rate.
+3. It specified input validation: marks must be from 0 to 100.
+4. It required ValueError for empty input, non-numeric values, and out-of-range values.
+5. It explicitly said not to use external libraries.
 
 **What B still leaves open:**
 
-1.
-2.
+1. The required rounding or precision for average and pass_rate is not specified.
+2. The exact validation rules for pass_mark are not fully specified.
 
 ---
 
