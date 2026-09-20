@@ -2,7 +2,7 @@
 
 **Name: Kaztay Dauren**
 **Group: Monday 16:00-19:00**
-**Date: 19.09.20026**
+**Date: 19.09.2026**
 
 > Fill in every section. **Do not delete or renumber the headings** — the grading pass reads them
 > by number. If something did not happen, write "did not happen" and why; an empty section and a
@@ -28,9 +28,9 @@ be checked:
 
 **Confirmations:**
 
-- Each prompt was sent in a **fresh chat**: yes / no
-- No follow-up questions were asked before Part 7: yes / no
-- Every output was saved **before** any editing: yes / no
+- Each prompt was sent in a **fresh chat**: yes 
+- No follow-up questions were asked before Part 7: yes 
+- Every output was saved **before** any editing: yes 
 
 ---
 
@@ -95,25 +95,37 @@ no external libraries. Return code plus a short explanation.
 **What I appended to Prompt B:**
 
 ```
-
+Example: analyze_marks([40, 60, 80], 50) → average 60, highest 80, lowest 40,
+pass_rate 66.67. Include tests for: one mark, decimals, custom pass_mark, empty list,
+text value, and marks below 0 or above 100. State any remaining assumptions before
+the code.
 ```
 
 **Tests the AI wrote for itself** — how many, and which situations do they cover?
 
 | Situation | Covered by the AI's tests? |
 | --- | --- |
-| one mark | |
-| decimals | |
-| custom pass_mark | |
-| empty list | |
-| text value | |
-| below 0 / above 100 | |
+| one mark | Yes |
+| decimals | Yes |
+| custom pass_mark | Yes |
+| empty list | Yes |
+| text value | Yes |
+| below 0 / above 100 | Yes |
 
-**Do the AI's own tests pass against the AI's own code?** yes / no
+**Do the AI's own tests pass against the AI's own code?** yes 
 
-**Do they agree with the harness in section 6?** yes / no — if no, where do they disagree:
+**Do they agree with the harness in section 6?** yes 
 
-**Assumptions C stated explicitly before the code:**
+**Assumptions C stated explicitly before the code:
+pass_rate is a percentage from 0 to 100 and is rounded to 2 decimal places.
+A mark equal to pass_mark is considered passing (>=).
+average is rounded to 2 decimal places.
+highest and lowest are returned without additional rounding.
+Boolean values are treated as non-numeric.
+NaN and infinity are rejected.
+pass_mark must be a numeric value from 0 to 100.
+The function accepts any iterable of marks because the input is converted to a list.
+**
 
 ---
 
@@ -122,16 +134,45 @@ no external libraries. Return code plus a short explanation.
 **The complete prompt I wrote** (one message, sent to a fresh chat):
 
 ```
-
+You are a Python developer. Implement exactly this function:
+analyze_marks(marks, pass_mark=50)
+The function must return a dictionary with exactly these four keys:
+"average", "highest", "lowest", and "pass_rate".
+Marks must be a list of numeric values from 0 to 100 inclusive. If the list is empty, contains a non-numeric value, or contains a value outside the range 0 to 100, raise ValueError.
+A mark equal to pass_mark counts as passing, so use >= for the passing condition.
+pass_mark must be a numeric value from 0 to 100 inclusive. Otherwise, raise ValueError.
+The average must be rounded to 2 decimal places.
+pass_rate must be calculated as the percentage of marks greater than or equal to pass_mark and rounded to 2 decimal places.
+highest and lowest must be returned without unnecessary rounding.
+Example:
+analyze_marks([40, 60, 80], 50)
+should return:
+{
+"average": 60.0,
+"highest": 80,
+"lowest": 40,
+"pass_rate": 66.67
+}
+Use only the Python standard library. Do not add a CLI, file handling, classes, external libraries, or other features that were not requested.
+Before the code, briefly state any assumptions that are still necessary.
+Also provide tests covering:
+one mark,
+decimal marks,
+a custom pass_mark,
+an empty list,
+a text value,
+marks below 0 or above 100.
+The function must use the exact name, signature, dictionary keys, validation rules, and rounding rules specified above.
 ```
 
 **What I deliberately added that A, B and C did not have:**
 
-1.
-2.
-3.
+1. An explicit rounding rule: average and pass_rate are rounded to 2 decimal places. B returned pass_rate=66.66666666666666 in case 1.
+2. An explicit condition >= for a mark equal to pass_mark, plus «exactly these four keys» with their names in quotes.
+3. Explicit validation of pass_mark (0–100), the requirement that marks is a list, and a ban on extras («no CLI, file handling, classes»).
 
-**The ambiguity I found in the specification, and how I resolved it inside Prompt D:**
+**The ambiguity I found in the specification, and how I resolved it inside Prompt D: 
+The specification gives pass_rate 66.67 for [40, 60, 80] but does not say the result must be rounded. Prompt B returned 66.66666666666666; the harness marked case 1 PASS only because of the 0.01 tolerance. A second ambiguity is whether a mark equal to pass_mark passes (case 3). In Prompt D I resolved both directly: "rounded to 2 decimal places" and "use >= for the passing condition".**
 
 ---
 
@@ -141,19 +182,19 @@ Six cases × four prompts. Verdicts are **PASS**, **FAIL** or **ERROR** only.
 
 | # | Call | Required | A | B | C | D |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `analyze_marks([40, 60, 80], 50)` | avg 60 · high 80 · low 40 · rate 66.67 | | | | |
-| 2 | `analyze_marks([100], 50)` | avg 100 · high 100 · low 100 · rate 100 | | | | |
-| 3 | `analyze_marks([49.5, 50], 50)` | avg 49.75 · high 50 · low 49.5 · rate 50 | | | | |
-| 4 | `analyze_marks([], 50)` | raises ValueError | | | | |
-| 5 | `analyze_marks([40, "60"], 50)` | raises ValueError | | | | |
-| 6 | `analyze_marks([-1, 50, 101], 50)` | raises ValueError | | | | |
-| | **Totals** | | /6 | /6 | /6 | /6 |
+| 1 | `analyze_marks([40, 60, 80], 50)` | avg 60 · high 80 · low 40 · rate 66.67 | Error | Pass | Pass | Pass |
+| 2 | `analyze_marks([100], 50)` | avg 100 · high 100 · low 100 · rate 100 | Error | Pass | Pass | Pass |
+| 3 | `analyze_marks([49.5, 50], 50)` | avg 49.75 · high 50 · low 49.5 · rate 50 | Error | Pass | Pass | Pass |
+| 4 | `analyze_marks([], 50)` | raises ValueError | Error | Pass | Pass | Pass |
+| 5 | `analyze_marks([40, "60"], 50)` | raises ValueError | Error | Pass | Pass | Pass |
+| 6 | `analyze_marks([-1, 50, 101], 50)` | raises ValueError | Error | Pass | Pass | Pass |
+| | **Totals** | | 0/6 | 6/6 | 6/6 | 6/6 |
 
 **For every FAIL and ERROR above, one line: what was returned or raised instead.**
 
 | Prompt | Case | What actually happened |
 | --- | --- | --- |
-| | | |
+| A | 1-6 | file defines no callable named 'analyze_marks' |
 | | | |
 | | | |
 
@@ -165,25 +206,64 @@ Six cases × four prompts. Verdicts are **PASS**, **FAIL** or **ERROR** only.
 **Prompt A**
 
 ```
-
+Write Python code to analyze student marks.
 ```
 
 **Prompt B**
 
 ```
-
+You are a Python developer. Implement analyze_marks(marks, pass_mark=50). Return
+average, highest, lowest, and pass_rate in a dictionary. Accept marks from 0 to 100;
+raise ValueError for an empty list, non-numeric values, or out-of-range values. Use
+no external libraries. Return code plus a short explanation.
 ```
 
 **Prompt C**
 
 ```
+You are a Python developer. Implement analyze_marks(marks, pass_mark=50). Return
+average, highest, lowest, and pass_rate in a dictionary. Accept marks from 0 to 100;
+raise ValueError for an empty list, non-numeric values, or out-of-range values. Use
+no external libraries. Return code plus a short explanation.
 
+Example: analyze_marks([40, 60, 80], 50) → average 60, highest 80, lowest 40,
+pass_rate 66.67. Include tests for: one mark, decimals, custom pass_mark, empty list,
+text value, and marks below 0 or above 100. State any remaining assumptions before
+the code.
 ```
 
 **Prompt D**
 
 ```
-
+You are a Python developer. Implement exactly this function:
+analyze_marks(marks, pass_mark=50)
+The function must return a dictionary with exactly these four keys:
+"average", "highest", "lowest", and "pass_rate".
+Marks must be a list of numeric values from 0 to 100 inclusive. If the list is empty, contains a non-numeric value, or contains a value outside the range 0 to 100, raise ValueError.
+A mark equal to pass_mark counts as passing, so use >= for the passing condition.
+pass_mark must be a numeric value from 0 to 100 inclusive. Otherwise, raise ValueError.
+The average must be rounded to 2 decimal places.
+pass_rate must be calculated as the percentage of marks greater than or equal to pass_mark and rounded to 2 decimal places.
+highest and lowest must be returned without unnecessary rounding.
+Example:
+analyze_marks([40, 60, 80], 50)
+should return:
+{
+"average": 60.0,
+"highest": 80,
+"lowest": 40,
+"pass_rate": 66.67
+}
+Use only the Python standard library. Do not add a CLI, file handling, classes, external libraries, or other features that were not requested.
+Before the code, briefly state any assumptions that are still necessary.
+Also provide tests covering:
+one mark,
+decimal marks,
+a custom pass_mark,
+an empty list,
+a text value,
+marks below 0 or above 100.
+The function must use the exact name, signature, dictionary keys, validation rules, and rounding rules specified above.
 ```
 
 ---
@@ -201,7 +281,7 @@ Six cases × four prompts. Verdicts are **PASS**, **FAIL** or **ERROR** only.
 | Noise (2 = none) | | | | |
 | **Total / 10** | | | | |
 
-**Prompt length, in words:** A ____ · B ____ · C ____ · D ____
+**Prompt length, in words:** A __7__ · B __44__ · C __83__ · D __220__
 
 **Words added per point gained** — B over A, C over B, D over C. One line on what that ratio says:
 
