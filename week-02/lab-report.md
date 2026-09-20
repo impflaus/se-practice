@@ -274,12 +274,12 @@ The function must use the exact name, signature, dictionary keys, validation rul
 
 | Criterion | A | B | C | D |
 | --- | --- | --- | --- | --- |
-| Correctness (cases passed) | | | | |
-| Requirement coverage | | | | |
-| Verifiability (tests) | | | | |
-| Assumptions stated | | | | |
-| Noise (2 = none) | | | | |
-| **Total / 10** | | | | |
+| Correctness (cases passed) | 0 | 2 | 2 | 2 |
+| Requirement coverage | 0 | 2 | 2 | 2 |
+| Verifiability (tests) | 0 | 0  | 2 | 2 |
+| Assumptions stated | 0 | 1 | 2 | 2 |
+| Noise (2 = none) | 0 | 1 | 1 | 2 |
+| **Total / 10** | 0 | 6 | 9 | 10 |
 
 **Prompt length, in words:** A __7__ · B __44__ · C __83__ · D __220__
 
@@ -297,12 +297,17 @@ Name test cases and real returned values. "More detailed prompts work better" sc
 
 ```
 (150–200 words)
-
+By score, Prompt D was the best (10/10), then C (9), B (6) and A (0). But I would use C at work. It has 83 words and got the same 6/6 as D, which has 220 words. 
+The biggest jump came from A to B. Prompt A gave me a CSV program with grades and ranking, and no analyze_marks function at all, so all six cases were ERROR. 
+After B gave the function name, the signature and the four keys, every case became PASS, for example case 6 raised ValueError for [-1, 50, 101]. C and D did not change any verdict, they only added tests and written assumptions. 
+I think the extra sentence in D about using >= was noise, because B and C already counted a mark equal to pass_mark as passing (case 3 gave pass_rate=50.0). 
+The ambiguity was rounding. The task shows pass_rate 66.67, but B returned 66.66666666666666 in case 1 and only passed because the harness tolerance is 0.01. 
+In Prompt D I wrote "rounded to 2 decimal places", and C and D returned 66.67.
 
 
 ```
 
-**Word count:**
+**Word count: 180**
 
 ---
 
