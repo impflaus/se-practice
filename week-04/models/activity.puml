@@ -1,0 +1,35 @@
+@startuml
+title Activity Diagram: Book Room
+
+start
+
+:Student selects room and time slot;
+
+if (Valid time range? (R1)) then ([yes])
+else ([no])
+  :Reject booking - invalid time range;
+  stop
+endif
+
+if (Room blocked? (R3)) then ([yes])
+  :Reject booking - room is blocked;
+  stop
+else ([no])
+endif
+
+if (Overlaps active booking? (R2)) then ([yes])
+  :Reject booking - time slot unavailable;
+  stop
+else ([no])
+endif
+
+:Create booking;
+:Send booking confirmation (R4);
+
+stop
+
+' Assumption:
+' A booking that starts exactly when another booking ends
+' is not considered an overlap.
+
+@enduml

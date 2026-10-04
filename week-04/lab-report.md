@@ -79,20 +79,20 @@ One row per association in your **revised** class diagram.
 
 | Association | Read left → right | Read right → left | Multiplicities |
 | --- | --- | --- | --- |
-| <Student — Booking> | <one student makes 0..* bookings> | <each booking belongs to exactly 1 student> | <1 / 0..*> |
-| <Room — Booking> | <...> | <...> | <...> |
+| Student – Booking | One student makes 0..* bookings. | Each booking belongs to exactly 1 student. | 1 / 0..* |
+| Room – Booking | One room has 0..* bookings. | Each booking reserves exactly 1 room. | 1 / 0..* |
 
 ### 4.2 Constraints the multiplicities cannot show
 
-- R2: <how your diagram states it — which note, on which class>
-- <any other rule that is not visible in multiplicities>
+- R2: A note on the Booking class states that active bookings for the same room cannot overlap.
+- R1: A note on the Booking class states that the start must be in the future and the duration must be greater than 0 and at most 2 hours.
+- R3: A note on the Room class states that a blocked room cannot accept a new booking.
 
 ### 4.3 Assumptions
 
-- A1: <an assumption you had to make — e.g. what happens to existing bookings when a room is blocked>
-- <A2 ...>
+- A1: Blocking a room prevents new bookings only; existing bookings remain unchanged.
+- A2: A booking that starts exactly when another booking for the same room ends is not considered an overlap.
 
-### 4.4 Findings
 
 ### 4.4 Findings
 
@@ -113,7 +113,9 @@ what it does in one line; write "none" for an activity diagram>
 
 | # | Element | Problem | Rule or story | Fix |
 | --- | --- | --- | --- | --- |
-| 1 | <element> | <problem> | <rule or story> | <fix> |
+| 1 | Duration <= 2 hours? | The AI checks only the maximum duration and does not check future start or duration > 0. | R1 | Replaced it with a full valid time range check. |
+| 2 | Decision guards | The AI used (yes) / (no), but the required activity-diagram convention uses ([yes]) / ([no]). | PlantUML convention | Rewrote the guards in the required format. |
+| 3 | existing confirmed booking | R2 refers to active bookings, but the AI narrowed the rule to confirmed bookings. | R2 | Changed the check to Overlaps active booking?. |
 
 ---
 
