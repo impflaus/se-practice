@@ -1,0 +1,65 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class Student {
+    - studentId : String
+    + viewAvailability(date : Date)
+    + bookRoom(room : Room, startTime : DateTime, endTime : DateTime) : Booking
+    + cancelBooking(booking : Booking)
+}
+
+class Administrator {
+    - adminId : String
+    + blockRoom(room : Room)
+    + unblockRoom(room : Room)
+    + reviewRoomUsage(startDate : Date, endDate : Date)
+}
+
+class Room {
+    - roomId : String
+    - isBlocked : boolean
+    + isAvailable(startTime : DateTime, endTime : DateTime) : boolean
+}
+
+class Booking {
+    - bookingId : String
+    - startTime : DateTime
+    - endTime : DateTime
+    - status : BookingStatus
+    + cancel()
+}
+
+enum BookingStatus {
+    CONFIRMED
+    CANCELLED
+}
+
+Student "1" -- "0..*" Booking : makes >
+Room "1" -- "0..*" Booking : reserved for >
+
+Booking ..> BookingStatus : status
+
+note right of Booking
+  R1: Start must be in the future.
+  Duration must be > 0 and <= 2 hours.
+
+  R2: Active bookings for the same
+  room cannot overlap.
+end note
+
+note right of Room
+  R3: A blocked room cannot accept
+  a new booking.
+end note
+
+' Assumption A1:
+' Each booking belongs to exactly one student.
+
+' Assumption A2:
+' Each booking reserves exactly one room.
+
+' Assumption A3:
+' BookingStatus is used to distinguish
+' active and cancelled bookings.
+
+@enduml

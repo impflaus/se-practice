@@ -28,13 +28,13 @@ AI's first replies are saved as files in `models/original/` — do not paste the
 ### 2.1 Task 1 — use-case prompt
 
 ```text
-The AI assumed that cancellation is limited to the student's own bookings, administrators manage room states and usage only, and viewing availability can be performed without making a reservation. It also mentioned email/SMS delivery mechanisms, although these are not specified by the approved stories.
+Using the supplied scenario and approved stories, generate PlantUML for a use-case diagram. Include Student and Administrator outside a named system boundary. Model their goals, show justified associations, and list assumptions. Use include or extend only with a clear reason.
 ```
 
 ### 2.2 Task 2 — class prompt
 
 ```text
-<paste>
+Create a UML domain class diagram in PlantUML for Smart Campus. Start with Student, Room, and Booking. Add attributes, appropriate operations, and association multiplicities. Add other classes only when requirements justify them. Explain each relationship and list assumptions. Avoid unjustified inheritance or composition.
 ```
 
 ### 2.3 Task 3 — behaviour prompt (3A sequence or 3B activity)
@@ -94,9 +94,13 @@ One row per association in your **revised** class diagram.
 
 ### 4.4 Findings
 
+### 4.4 Findings
+
 | # | Element | Problem | Rule or story | Fix |
 | --- | --- | --- | --- | --- |
-| 1 | <element> | <problem> | <rule or story> | <fix> |
+| 1 | Administrator–Room association | Multiplicity implies each room is managed by exactly one administrator, which is not stated. | US-07 | Removed the association; block/unblock remains an Administrator operation. |
+| 2 | UsageReport | The class adds report IDs, utilization maps and persistent report objects not required by the story. | US-08 | Removed UsageReport and kept reviewRoomUsage() as an Administrator operation. |
+| 3 | Room–Booking / Booking | R2 was not explicitly represented as a domain constraint. | R2 | Added a note stating that active bookings for the same room cannot overlap. |
 
 ---
 
