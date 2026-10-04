@@ -10,13 +10,13 @@ cat week-03/requirements/user-stories.md# Week 04 — Lab report: Modeling the S
 
 | Field | Value |
 | --- | --- |
-| Name | <your name> |
-| Group | <your group> |
-| AI assistant | <e.g. Claude, ChatGPT, Gemini, DeepSeek, Grok> |
-| Exact model | <the exact model name with its version, e.g. claude-sonnet-4-5> |
-| Renderer | <PlantUML web server / VS Code extension / IntelliJ plugin / local jar> |
-| Behaviour diagram | <sequence / activity / both> |
-| Stories used | <my week-03 stories, revised / the reference set from README §3> |
+| Name | Dauren |
+| Group | Monday 16:00-19:00 |
+| AI assistant | Gemini |
+| Exact model | Gemini 3.6 Flash |
+| Renderer | <PlantUML web server |
+| Behaviour diagram | activity |
+| Stories used | my week-03 stories, revised |
 
 ---
 
@@ -28,7 +28,7 @@ AI's first replies are saved as files in `models/original/` — do not paste the
 ### 2.1 Task 1 — use-case prompt
 
 ```text
-<paste>
+The AI assumed that cancellation is limited to the student's own bookings, administrators manage room states and usage only, and viewing availability can be performed without making a reservation. It also mentioned email/SMS delivery mechanisms, although these are not specified by the approved stories.
 ```
 
 ### 2.2 Task 2 — class prompt
@@ -66,8 +66,8 @@ proves it is a problem.
 
 | # | Element | Problem | Rule or story | Fix |
 | --- | --- | --- | --- | --- |
-| 1 | <e.g. Student → Send confirmation> | <what is wrong> | <R4 / US-01 / scenario sentence> | <what you changed> |
-| 2 | <element> | <problem> | <rule or story> | <fix> |
+| 1 | US-03: Validate Booking Duration | This is a system validation step, not a user goal. | US-03 / R1 | Removed it as a separate use case and treated the two-hour limit as a constraint of Book Room.|
+| 2 | US-05: Send Booking Confirmation | Sending a confirmation is a system action/outcome, not a separate actor goal. | US-05 / R4 | Removed it as a separate use case and represented confirmation as the successful outcome of Book Room. |
 
 ---
 
