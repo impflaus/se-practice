@@ -1,0 +1,42 @@
+@startuml
+skinparam ConditionEndStyle hollow
+
+header Smart Campus Study Room Booking
+title Activity Diagram: Book Room Process
+
+start
+
+:Student selects Room, Date, Start Time, and End Time;
+
+' Check Room Blocked Status
+if (Is room blocked by Administrator?) then (yes)
+  :Display "Room is currently blocked/unavailable";
+  :Show Booking Failure / Rejection;
+  stop
+else (no)
+endif
+
+' Validate Booking Duration (US-03)
+if (Duration <= 2 hours?) then (no)
+  :Display "Booking exceeds 2-hour limit";
+  :Show Booking Failure / Rejection;
+  stop
+else (yes)
+endif
+
+' Check Overlapping Bookings (US-02)
+if (Does time slot overlap with existing confirmed booking?) then (yes)
+  :Display "Selected time slot is already occupied";
+  :Show Booking Failure / Rejection;
+  stop
+else (no)
+endif
+
+' Create & Confirm Booking (US-02, US-05)
+:Create Booking Record (Status = CONFIRMED);
+:Save Booking details to System;
+:Send Booking Confirmation to Student;
+:Display "Booking Successful";
+
+stop
+@enduml

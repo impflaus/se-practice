@@ -1,0 +1,46 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Student" as student
+actor "Administrator" as admin
+
+rectangle "Smart Campus Study Room Booking System" {
+
+    usecase "View Room Availability (US-01)" as UC1
+    usecase "Book Room (US-02, US-03, US-05)" as UC2
+    usecase "Cancel Own Booking (US-04)" as UC3
+    usecase "Block / Unblock Room (US-07)" as UC5
+    usecase "Review Room Usage (US-08)" as UC6
+
+    student --> UC1
+    student --> UC2
+    student --> UC3
+
+    admin --> UC5
+    admin --> UC6
+
+    note right of UC2
+      R1: Start must be in the future.
+      Duration must be > 0 and <= 2 hours.
+
+      R2: Active bookings for the same
+      room cannot overlap.
+
+      R3: A blocked room cannot accept
+      a new booking.
+
+      R4: A successful booking produces
+      a confirmation.
+    end note
+}
+
+' Assumption A1:
+' A booking that starts exactly when another booking ends
+' is not considered an overlap.
+
+' Assumption A2:
+' Blocking a room prevents new bookings only.
+' Existing bookings remain unchanged.
+
+@enduml

@@ -1,0 +1,31 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Student" as student
+actor "Administrator" as admin
+
+rectangle "Smart Campus Study Room Booking System" {
+
+    usecase "US-01: View Room Availability" as UC1
+    usecase "US-02: Book Room Slot" as UC2
+    usecase "US-03: Validate Booking Duration" as UC3
+    usecase "US-04: Cancel Own Booking" as UC4
+    usecase "US-05: Send Booking Confirmation" as UC5
+    usecase "US-07: Block or Unblock Room" as UC6
+    usecase "US-08: Review Room Usage Reports" as UC7
+
+    ' Student Associations
+    student --> UC1
+    student --> UC2
+    student --> UC4
+
+    ' Administrator Associations
+    admin --> UC6
+    admin --> UC7
+
+    ' Relationships (Include / Extend)
+    UC2 .> UC3 : <<include>>
+    UC5 .> UC2 : <<extend>> : [Booking Succeeded]
+}
+@enduml

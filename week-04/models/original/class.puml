@@ -1,0 +1,63 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class Student {
+    - studentId : String
+    - name : String
+    - email : String
+    + viewAvailability(date: Date) : List<Room>
+    + bookRoom(room: Room, startTime: DateTime, endTime: DateTime) : Booking
+    + cancelBooking(bookingId: String) : boolean
+}
+
+class Room {
+    - roomId : String
+    - roomNumber : String
+    - capacity : int
+    - isBlocked : boolean
+    + isAvailable(startTime: DateTime, endTime: DateTime) : boolean
+    + setBlockedStatus(blocked: boolean) : void
+}
+
+class Booking {
+    - bookingId : String
+    - startTime : DateTime
+    - endTime : DateTime
+    - status : BookingStatus
+    - createdAt : DateTime
+    + calculateDuration() : int
+    + isValidDuration() : boolean
+    + cancel() : void
+}
+
+class Administrator {
+    - adminId : String
+    - name : String
+    - email : String
+    + blockRoom(room: Room) : void
+    + unblockRoom(room: Room) : void
+    + generateUsageReport(startDate: Date, endDate: Date) : UsageReport
+}
+
+class UsageReport {
+    - reportId : String
+    - startDate : Date
+    - endDate : Date
+    - totalBookings : int
+    - roomUtilizationMap : Map<String, Double>
+    + generate() : void
+}
+
+enum BookingStatus {
+    CONFIRMED
+    CANCELLED
+}
+
+' Domain Associations
+Student "1" -- "0..*" Booking : makes >
+Room "1" -- "0..*" Booking : reserved in >
+Administrator "1" -- "0..*" Room : manages >
+Administrator "1" -- "0..*" UsageReport : generates >
+Booking "1" ..> "1" BookingStatus : uses
+
+@enduml
