@@ -37,7 +37,6 @@ enum BookingStatus {
 Student "1" -- "0..*" Booking : makes >
 Room "1" -- "0..*" Booking : reserved for >
 
-Booking ..> BookingStatus : status
 
 note right of Booking
   R1: Start must be in the future.
@@ -45,6 +44,12 @@ note right of Booking
 
   R2: Active bookings for the same
   room cannot overlap.
+
+  US-04: A student can cancel only
+  their own booking.
+
+  Assumption: CONFIRMED bookings
+  are considered active for R2.
 end note
 
 note right of Room

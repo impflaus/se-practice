@@ -46,13 +46,13 @@ Create a UML domain class diagram in PlantUML for Smart Campus. Start with Stude
 ### 2.4 Focused correction prompts (if you sent any)
 
 ```text
-<paste, or write "none">
+none
 ```
 
 ### 2.5 Critique prompt
 
 ```text
-<paste>
+Compare my diagrams with the requirements. Identify missing rules, inconsistent names, and unjustified elements. Cite each issue and propose a specific correction.
 ```
 
 ---
@@ -126,9 +126,12 @@ critique is another claim to evaluate, not a verdict: reject what is wrong and s
 
 | # | Issue the AI raised | Element it cited | Verdict | Why |
 | --- | --- | --- | --- | --- |
-| 1 | <issue> | <element> | <accept / reject> | <your reason> |
-| 2 | <issue> | <element> | <accept / reject> | <your reason> |
-| 3 | <issue> | <element> | <accept / reject> | <your reason> |
+| 1 | Booking confirmation was modeled with <<extend>>, although confirmation is mandatory after a successful booking. | Use-case diagram: Receive Booking Confirmation → Book Room | accept | R4 states that every successful booking produces a confirmation, so it should not look like optional extension behavior. I merged US-05 into Book Room and represented confirmation as its successful outcome. |
+| 2 | Administrator should have dependency arrows to Room or Booking. | Class diagram: Administrator | reject | The approved stories do not define a structural Administrator–Room or Administrator–Booking relationship. The operations blockRoom() and unblockRoom() already represent US-07. |
+| 3 | The class diagram does not explicitly show that a student can cancel only their own booking. | Class diagram: Booking / Student | accept | This constraint is explicitly stated in US-04, so I added it as a note on Booking. |
+| 4 | The diagrams do not explicitly define what an active booking means for R2. | Class and activity diagrams: BookingStatus / overlap check | accept | Since the model contains CONFIRMED and CANCELLED statuses, I declared CONFIRMED bookings as active and CANCELLED bookings as non-blocking. |
+| 5 | US-06 is missing. | Approved stories and all diagrams | reject | US-06 was intentionally removed from the revised Week 03 story set. I preserved the original IDs, so US-07 and US-08 were not renumbered. |
+| 6 | Student operations should be moved to a service/controller class. | Class diagram: Student | reject | The task asks for a domain class diagram and does not justify introducing a service/controller class. Adding one would introduce an unnecessary design element. |
 
 ---
 
@@ -139,11 +142,17 @@ diagram**, spelled exactly as in the diagram, with the story ID it traces to.
 
 | Requirement / story | Use case | Classes | Behaviour element |
 | --- | --- | --- | --- |
-| R1 | <use case> | <classes and attributes> | <message, guard or decision> |
-| R2 | <use case> | <classes, note> | <message, guard or decision> |
-| R3 | <use case> | <classes and attributes> | <message, guard or decision> |
-| R4 | <use case> | <classes> | <message or action> |
-| <US-01> | <Book room> | <Student, Booking, Room> | <message or action> |
+| R1 | Book Room (US-02, US-03, US-05) | Booking: startTime, endTime; R1 note | Valid time range? (R1) |
+| R2 | Book Room (US-02, US-03, US-05) | Room–Booking association; Booking R2 note | Overlaps active CONFIRMED booking? (R2) |
+| R3 | Book Room (US-02, US-03, US-05) | Room: isBlocked; R3 note | Room blocked? (R3) |
+| R4 | Book Room (US-02, US-03, US-05) | Booking | Send booking confirmation (R4) |
+| US-01 | View Room Availability (US-01) | Student, Room | Student selects room and time slot |
+| US-02 | Book Room (US-02, US-03, US-05) | Student, Booking, Room | Create booking |
+| US-03 | Book Room (US-02, US-03, US-05) | Booking: startTime, endTime | Valid time range? (R1) |
+| US-04 | Cancel Own Booking (US-04) | Student, Booking; ownership note | Not part of the Book Room activity diagram |
+| US-05 | Book Room (US-02, US-03, US-05) | Booking | Send booking confirmation (R4) |
+| US-07 | Block / Unblock Room (US-07) | Administrator, Room | Room blocked? (R3) |
+| US-08 | Review Room Usage (US-08) | Administrator | Not part of the Book Room activity diagram |
 
 ---
 
@@ -154,9 +163,9 @@ behaviour diagram). "Before" is what the AI produced; "After" is what you submit
 
 | # | Diagram | Before (AI's original) | After (your revision) | Reason |
 | --- | --- | --- | --- | --- |
-| 1 | <use case> | <before> | <after> | <rule, story or notation reason> |
-| 2 | <class> | <before> | <after> | <reason> |
-| 3 | <sequence / activity> | <before> | <after> | <reason> |
+| 1 | use case | Validate Booking Duration was a separate use case and Booking Confirmation was modeled separately. | Book Room now covers US-02, US-03 and US-05, with booking rules represented as constraints and outcomes. | US-03 is a booking constraint, not a separate user goal, and R4 requires confirmation after success. |
+| 2 | class | The AI added UsageReport and an unjustified Administrator to Room association, and R2 was not shown as a note. | UsageReport and the unjustified association were removed, and notes were added for the booking constraints. | Only requirements-supported domain concepts should be modeled, and R2 must be stated explicitly. |
+| 3 | activity | The AI checked only the two-hour maximum and did not fully represent R1. | The revised activity has separate checks for R1, R3 and R2 before booking creation. | The activity requirements require three separate guarded decisions before creating a booking. |
 
 ---
 
@@ -166,10 +175,49 @@ Paste the complete output of `python tests/check_models.py`, then explain **ever
 keeping**. The same IDs go in `submission.yml` under `checker.kept_fails`. A FAIL you report and explain costs you nothing. One you hide costs the whole criterion.
 
 ```text
-<paste the full output>
+Week 04 structural check - shape only, never quality
+
+UC1  PASS  Student and Administrator declared
+UC2  PASS  named system boundary: "Smart Campus Study Room Booking System"
+UC3  PASS  all actors declared outside the boundary
+UC4  PASS  all scenario goals present (5 use cases)
+UC5  PASS  no actor is associated with a confirmation use case
+UC6  PASS  actor responsibilities match the scenario
+UC7  PASS  use cases are goals, not screens or components
+UC8  PASS  every include / extend / generalization carries a ' why: comment (or there are none)
+UC9  PASS  revised diagram differs from the AI's original
+CL1  PASS  Student, Room and Booking present
+CL2  PASS  Booking is associated with Student and with Room
+CL3  PASS  every association has multiplicities at both ends
+CL4  PASS  1 student / 1 room per booking, 0..* bookings per student and per room
+CL5  PASS  every inheritance / composition / aggregation carries a ' why: comment (or there are none)
+CL6  PASS  only domain concepts in the class diagram
+CL7  PASS  attributes needed by R1-R3 are present
+CL8  PASS  a note states R2 (no overlapping active bookings)
+AC1  PASS  initial and final nodes present
+AC2  PASS  separate decisions check R1, R3 and R2 (3 decisions)
+AC3  PASS  every branch has a labelled guard
+AC4  PASS  no parallel paths
+AC5  PASS  confirmation on success, rejection on failure
+AC6  PASS  creation comes after all rule checks
+FI1  PASS  the AI's original output is kept for every diagram
+FI2  PASS  a rendered image for every diagram
+LR1  PASS  §1 setup filled (tool and model recorded)
+LR2  PASS  4 prompts pasted in §2
+LR3  PASS  2 use-case findings in §3
+LR4  PASS  §4 relationships read both ways, 2 assumption(s) declared
+LR5  PASS  3 behaviour-diagram findings in §5
+LR6  PASS  5 critique issues with a verdict
+LR7  PASS  3 change-log rows covering all three diagrams
+CS1  PASS  7 approved stories
+CS2  PASS  §7 traces R1-R4 into the diagrams
+CS3  PASS  every use case traces to an approved story
+
+SUMMARY pass=35 fail=0 error=0
+A FAIL you report and explain in lab-report.md §9 costs you nothing. One you hide costs the criterion.
 ```
 
-**FAILs I am keeping, and why:** <one line per check ID, or "none">
+**FAILs I am keeping, and why:** none
 
 ---
 
@@ -180,3 +228,9 @@ reached the code if nobody had reviewed it? What did the critique find that you 
 did it claim that was false? Be specific: "the AI got the multiplicities wrong" is worth nothing;
 "the AI put 1..* on the Booking end, which says every room must already have a booking" is worth
 everything.>
+
+```
+The class diagram was the diagram the AI got most wrong. It added a UsageReport class with fields such as reportId and roomUtilizationMap even though US-08 only says that an administrator should review room usage. It also created an Administrator–Room association that suggested a structural relationship not required by the stories. If these decisions had reached the code, the system could have contained unnecessary classes and relationships.
+
+The critique found one issue that I had not made explicit enough: US-04 says that a student can cancel only their own booking, so I added this constraint to the class diagram. It also helped me clarify that CONFIRMED bookings are treated as active for the R2 overlap check. However, the critique incorrectly claimed that US-06 was missing by mistake. US-06 was intentionally removed from my revised Week 03 stories, while I kept the original IDs for US-07 and US-08.
+```

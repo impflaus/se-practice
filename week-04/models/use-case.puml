@@ -8,22 +8,17 @@ actor "Administrator" as admin
 rectangle "Smart Campus Study Room Booking System" {
 
     usecase "View Room Availability (US-01)" as UC1
-    usecase "Book Room (US-02, US-03)" as UC2
+    usecase "Book Room (US-02, US-03, US-05)" as UC2
     usecase "Cancel Own Booking (US-04)" as UC3
-    usecase "Receive Booking Confirmation (US-05)" as UC4
     usecase "Block / Unblock Room (US-07)" as UC5
     usecase "Review Room Usage (US-08)" as UC6
 
     student --> UC1
     student --> UC2
     student --> UC3
-    student --> UC4
 
     admin --> UC5
     admin --> UC6
-
-    ' why: R4 - confirmation is produced only after a successful booking
-    UC4 .> UC2 : <<extend>>
 
     note right of UC2
       R1: Start must be in the future.
@@ -34,6 +29,9 @@ rectangle "Smart Campus Study Room Booking System" {
 
       R3: A blocked room cannot accept
       a new booking.
+
+      R4: A successful booking produces
+      a confirmation.
     end note
 }
 

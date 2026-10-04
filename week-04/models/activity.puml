@@ -17,7 +17,7 @@ if (Room blocked? (R3)) then ([yes])
 else ([no])
 endif
 
-if (Overlaps active booking? (R2)) then ([yes])
+if (Overlaps active CONFIRMED booking? (R2)) then ([yes])
   :Reject booking - time slot unavailable;
   stop
 else ([no])
@@ -31,5 +31,7 @@ stop
 ' Assumption:
 ' A booking that starts exactly when another booking ends
 ' is not considered an overlap.
+' CONFIRMED bookings are considered active;
+' CANCELLED bookings do not block a time slot.
 
 @enduml
