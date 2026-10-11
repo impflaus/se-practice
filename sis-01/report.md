@@ -9,7 +9,7 @@
   - Comments like this one are ignored by the word counter. Delete them or leave them.
 -->
 
-**Topic:** 1.(write here)
+**Topic:** 1. 1.1
 
 <!-- Exactly one of 1.1 … 1.10, e.g.  **Topic:** 1.4  -->
 
@@ -20,17 +20,17 @@
 <!-- 100–150 words, labels included. One small scenario, used in every prompt and in your
      whole answer. Anything fictional is labelled in Assumptions. -->
 
-**Question:** (write here — the question of your topic, in your own words)
+**Question:** What should a food delivery company receive besides working program code for its ordering system to be considered professionally delivered?
 
-**Users:** (write here)
+**Users:** Customers who place food orders, restaurant staff who receive and prepare them, and delivery staff who handle deliveries.
 
-**Problem:** (write here)
+**Problem:** The company wants one system that lets customers order food online, sends orders to restaurants, and helps staff track the order from placement to delivery.
 
-**Constraints:** (write here — two constraints)
+**Constraints:** The system must be easy to use on mobile devices, and order information must remain accurate while different users update the order status.
 
-**Risk:** (write here — one important failure or misuse risk)
+**Risk:** A software defect could create an incorrect order or status, causing the restaurant to prepare the wrong food or the delivery to go to the wrong customer.
 
-**Assumptions:** (write here — every fictional detail, labelled as fictional)
+**Assumptions:** The company, restaurants, delivery workflow, project budget, technical infrastructure, and business rules in this scenario are fictional and are used only for this assignment.
 
 ## 2. Analysis
 
@@ -74,11 +74,11 @@
 <!-- Written BEFORE you run Prompt A. Five points, your own words, numbered. These are the
      "five points" you paste into Prompt A. -->
 
-1. (write here)
-2. (write here)
-3. (write here)
-4. (write here)
-5. (write here)
+1. Working code alone is not enough because the company also needs clear requirements and documentation for operating the food delivery system.
+2. The delivered system should include test evidence for important actions such as placing an order, updating its status, and preventing incorrect order data.
+3. Customers, restaurant staff, and delivery staff need simple instructions because they use different parts of the same system.
+4. The company needs maintenance and support after release because bugs, restaurant changes, and new delivery requirements may appear later.
+5. Deployment, backup, recovery, and security information are also important so the company can keep the service running and recover from failures.
 
 ## 8. Appendix B — AI exchanges
 
