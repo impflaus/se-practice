@@ -7,7 +7,7 @@ live in `report.md`, section 8 — this file is the summary, not a second copy.
 
 | Tool | Exact model / plan | Used for | Which sections it touched |
 | --- | --- | --- | --- |
-| Gemini | Gemini 3.6 Flash | | |
+| Gemini | Gemini 3.6 Flash | Drafting, critique, and revision through Prompts A, B, and C | Section 8; revisions reflected in Sections 2–4 and Section 9 |
 
 **Two parts of this assignment are yours alone. Both were written without AI assistance:** yes
 <!-- The initial outline (report.md section 7, written BEFORE Prompt A) and the reflection
@@ -18,8 +18,9 @@ live in `report.md`, section 8 — this file is the summary, not a second copy.
 
 **Everything I submitted, I can explain and defend without consulting the assistant:** yes 
 
-**Anything I accepted from the AI without fully understanding it:**
+**Anything I accepted from the AI without fully understanding it:** Nothing 
 <!-- Name the section and the sentence. "Nothing" is a valid answer only if it is true. -->
+
 
 Signed: Dauren 
 Date: 11.10.2026
