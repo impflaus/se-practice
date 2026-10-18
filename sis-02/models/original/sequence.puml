@@ -1,0 +1,48 @@
+@startuml
+skinparam Style strictuml
+autonumber
+
+actor "Student" as Student
+participant "CatalogController" as Catalog
+participant "RegistrationService" as RegService
+participant "CourseOffering" as Offering
+participant "Enrollment" as Enrollment
+
+== Browsing Catalog (US-01 / R1) ==
+Student -> Catalog : getOfferingDetails(semester, offeringId)
+activate Catalog
+Catalog -> Offering : getDetailsAndAvailablePlaces()
+activate Offering
+Offering --> Catalog : courseCode, title, section, capacity, enrolledCount
+deactivate Offering
+Catalog --> Student : display offering details & available places (capacity - enrolledCount)
+deactivate Catalog
+
+== Registration: Atomic Guarded Checks & Outcomes (US-02, US-03 / R2–R5) ==
+Student -> RegService : register(studentId, offeringId)
+activate RegService
+
+group #LightPink Atomic Operation [Synchronization Lock / DB Transaction]
+    RegService -> Offering : checkEnrollmentEligibility(studentId)
+    activate Offering
+
+    alt Student already enrolled [AC-03 / R3, R5]
+        Offering --> RegService : Error ("already enrolled")
+        RegService --> Student : Reject Request ("already enrolled")
+
+    else Course offering is full (available places == 0) [AC-05, AC-06 / R2, R5]
+        Offering --> RegService : Error ("course full")
+        RegService --> Student : Reject Request ("course full")
+
+    else Eligible and place available [AC-04, AC-06 / R2, R4]
+        create Enrollment
+        Offering -> Enrollment : create(studentId, offeringId)
+        Offering -> Offering : incrementEnrolledCount()
+        Offering --> RegService : Success (enrollmentConfirmation)
+        deactivate Offering
+        RegService --> Student : Return Confirmation
+    end
+end group
+
+deactivate RegService
+@startuml
