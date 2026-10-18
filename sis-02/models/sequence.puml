@@ -1,3 +1,77 @@
-' SIS #02 — your FINAL sequence diagram goes here, as PlantUML (@startuml … @enduml).
-' Start from the AI's original in models/original/sequence.puml, apply your accepted review
-' decisions, then render it to models/img/sequence.png (or .svg). README section 5.
+@startuml
+skinparam style strictuml
+autonumber
+
+actor Student
+participant CatalogController
+participant RegistrationService
+participant CourseOffering
+participant Enrollment
+
+== Browse Course Catalog (R1) ==
+
+Student -> CatalogController : browseCatalog(semester)
+activate CatalogController
+
+CatalogController -> CourseOffering : getOfferingDetailsAndAvailablePlaces()
+activate CourseOffering
+
+CourseOffering --> CatalogController : courseCode, title, offeringId, semester, availablePlaces
+deactivate CourseOffering
+
+CatalogController --> Student : display catalog and available places
+deactivate CatalogController
+
+== Course Registration (R2-R5) ==
+
+Student -> RegistrationService : register(studentId, offeringId)
+activate RegistrationService
+
+group atomic registration operation
+
+    note over RegistrationService, CourseOffering
+      Atomic transaction:
+      Lock the selected offering.
+      Recheck duplicates and current capacity.
+      Create Enrollment and update count together.
+      Catalog browsing never reserves a place.
+    end note
+
+    RegistrationService -> CourseOffering : isStudentEnrolled(studentId)
+    activate CourseOffering
+    CourseOffering --> RegistrationService : alreadyEnrolled
+    deactivate CourseOffering
+
+    RegistrationService -> CourseOffering : getCurrentCountAndCapacity()
+    activate CourseOffering
+    CourseOffering --> RegistrationService : enrolledCount, capacity
+    deactivate CourseOffering
+
+    alt already enrolled
+
+        RegistrationService --> Student : reject "already enrolled"
+
+    else course full
+
+        RegistrationService --> Student : reject "course full"
+
+    else not enrolled and places left
+
+        create Enrollment
+        RegistrationService -> Enrollment : createEnrollment(studentId, offeringId)
+        Enrollment --> RegistrationService : enrollmentId
+
+        RegistrationService -> CourseOffering : incrementEnrolledCount()
+        activate CourseOffering
+        CourseOffering --> RegistrationService : updatedCount
+        deactivate CourseOffering
+
+        RegistrationService --> Student : confirm registration(enrollmentId)
+
+    end
+
+end
+
+deactivate RegistrationService
+
+@enduml

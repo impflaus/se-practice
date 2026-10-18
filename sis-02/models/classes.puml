@@ -1,4 +1,57 @@
-' SIS #02 — your FINAL class diagram goes here, as PlantUML (@startuml … @enduml).
-' The file is classes.puml (plural), not class.puml as in Week 04.
-' Start from the AI's original in models/original/classes.puml, apply your accepted review
-' decisions, then render it to models/img/classes.png (or .svg). README section 6.
+@startuml
+skinparam classAttributeIconSize 0
+
+class Student {
+    - studentId: String
+    - name: String
+}
+
+class Course {
+    - courseCode: String
+    - title: String
+    - description: String
+}
+
+class CourseOffering {
+    - offeringId: String
+    - section: String
+    - semester: String
+    - capacity: Integer
+    - enrolledCount: Integer
+    + getAvailablePlaces(): Integer
+    + isStudentEnrolled(studentId: String): Boolean
+    + getCurrentCountAndCapacity(): IntegerPair
+    + incrementEnrolledCount(): Void
+}
+
+class Enrollment {
+    - enrollmentId: String
+    - enrollmentDate: DateTime
+}
+
+Course "1" -- "0..*" CourseOffering : defines >
+Student "1" -- "0..*" Enrollment : holds >
+CourseOffering "1" -- "0..*" Enrollment : receives >
+
+note right of CourseOffering
+    Capacity constraint (R2):
+    capacity > 0
+    0 <= enrolledCount <= capacity
+
+    availablePlaces = capacity - enrolledCount
+
+    enrolledCount equals the number
+    of Enrollment records for this offering.
+end note
+
+note bottom of Enrollment
+    Uniqueness constraint (R3):
+
+    A Student may have at most one
+    Enrollment for each CourseOffering.
+
+    Each Enrollment links exactly
+    one Student and one CourseOffering.
+end note
+
+@enduml
