@@ -15,7 +15,7 @@ grader find your answers by them. Add rows to any table; never remove its header
 | --- | --- |
 | Tool | Bolt.new |
 | Exact model (as Bolt shows it, or `not displayed`) | not displayed |
-| Bolt project link (or `not shared`, and why) | |
+| Bolt project link (or `not shared`, and why) | https://bolt.new/p/72154936 |
 | Browser and version | Google Chrome  |
 | If you could not use Bolt.new: the tool you used instead, and why | |
 
@@ -52,17 +52,29 @@ Use fictional sample data only. Keep the implementation simple and within one-pa
 ## 3. Task 2 — prototype v1
 
 v1 export saved in `original/` and screenshot saved as `evidence/v1.png` **before** any cleanup
-prompt: yes / no
+prompt: yes 
 
 **Bolt's list of the files/components it created, pasted unedited:**
 
 ```text
-(paste here)
+src/types.ts — shared types (Room, Booking, CheckResult)
+src/data/rooms.ts — fictional sample rooms and bookings
+src/lib/availability.ts — validation + overlap logic (AC1–AC4)
+src/components/TimeInput.tsx — labeled time field
+src/components/ResultPanel.tsx — Available/Unavailable verdict display
+src/components/RoomSchedule.tsx — a room's bookings + blocked status
+src/App.tsx — the one-page app tying it together
 ```
 
 **What v1 does — one line per thing that works, or visibly does not:**
 
--
+- The page displays a Smart Campus Room Availability Checker.
+- The user can select a room and enter a start and end time.
+- The page provides a current time input and a "Use now" button.
+- The selected room is Aurora Hall — North Wing.
+- The displayed existing bookings are 09:00–10:00 and 13:00–14:00.
+- The page includes "Check availability" and "Reset" buttons.
+- The availability rules have not been tested yet.
 
 **Repair prompt** (only if the first build did not run — the deck allows one, then the result is
 v1). Leave empty if you did not need it:
