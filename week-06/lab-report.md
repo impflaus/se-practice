@@ -93,15 +93,15 @@ no way to set up the case). Save each final run as `evidence/final-T<n>.png`.
 
 | # | Case | What you set up and request | Expected | AC | Result on v1 | Result on final | Final screenshot |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T1 | Touching | 11:00–12:00 | Available | AC4 | Not testable | — | t1.png |
-| T2 | Overlap | 10:30–11:30 | Unavailable | AC4 | Not testable | — | t2.png |
-| T3 | Blocked | 11:00–12:00, room blocked | Unavailable | AC3 | Not testable | — | t3.png |
-| T4 | Exactly 2 hours | 12:00–14:00 | Available | AC2 | Not testable | — | t4.png |
-| T5 | Over 2 hours | 12:00–14:01 | Unavailable | AC2 | Not testable | — | t5.png |
-| T6 | Starts now | 09:00–09:30 (current time 09:00) | Unavailable | AC1 | Not testable | — | t6.png |
-| T7 | Reversed times | 12:00–11:00, and the page says why | Unavailable | AC1, AC6 | Not testable | — | t7.png |
-| T8 | Same check twice | T1, then T1 again without reloading | Available | AC5 | Not testable | — | t8.png |
-| T9 | Narrow screen | T1 at about 375 px wide | Available | AC6 | Not testable | — | t9.png |
+| T1 | Touching | 11:00–12:00 | Available | AC4 | Not testable | Available | final-T1.png |
+| T2 | Overlap | 10:30–11:30 | Unavailable | AC4 | Not testable | Unavailable | final-T2.png |
+| T3 | Blocked | 11:00–12:00, room blocked | Unavailable | AC3 | Not testable | Unavailable | final-T3.png |
+| T4 | Exactly 2 hours | 12:00–14:00 | Available | AC2 | Not testable | Available | final-T4.png |
+| T5 | Over 2 hours | 12:00–14:01 | Unavailable | AC2 | Not testable | Unavailable | final-T5.png |
+| T6 | Starts now | 09:00–09:30 (current time 09:00) | Unavailable | AC1 | Not testable | Unavailable | final-T6.png |
+| T7 | Reversed times | 12:00–11:00, and the page says why | Unavailable | AC1, AC6 | Not testable | Unavailable | final-T7.png |
+| T8 | Same check twice | T1, then T1 again without reloading | Available | AC5 | Not testable | Available | final-T8.png |
+| T9 | Narrow screen | T1 at about 375 px wide | Available | AC6 | Not testable | Available | final-T9.png |
 
 ---
 
@@ -127,13 +127,36 @@ in) and Bolt's answer, unedited.
 **Functional fix prompt, as sent, and Bolt's answer:**
 
 ```text
-(paste here)
+In the current prototype, selecting Beacon 204 and Cedar Lab to reproduce the fixed nine-case test baseline produces an extra 17:00–18:00 booking for Beacon 204 and no 10:00–11:00 booking for blocked Cedar Lab, but AC4 requires checking touching and overlapping intervals against the prescribed existing 10:00–11:00 booking. Make the smallest change that fixes this behavior. Preserve the other acceptance criteria. Explain which file/component you changed and why.
+
+BOLTs ANSWER:
+626f6c742d63632d6167656e74Looking at the sample data to fix the test baseline.The test baseline needs: Beacon 204 without the extra 17:00–18:00 booking, and Cedar Lab with a prescribed 10:00–11:00 booking so AC4 overlap checks can run against a blocked room's existing schedule. Smallest fix is to the sample data only.Wait — I should re-read this. The prescribed booking is 10:00–11:00 = 600–660, which I used. Let me verify and build.Build passes.
+
+**What I changed and why**
+
+I only touched `src/data/rooms.ts` (the fictional sample data) — the smallest change that fixes the baseline without touching the validation logic in `src/lib/availability.ts`, so AC1–AC5 stay intact:
+
+1. **Beacon 204** — removed the extra 17:00–18:00 booking (`Journal Club`), leaving just the 10:00–11:00 `Team Standup`. This matches the prescribed nine-case baseline.
+2. **Cedar Lab** — added the prescribed 10:00–11:00 booking (`Reserved Block`, 600–660 minutes). Cedar is still `blocked: true`, so AC3 still rejects it, but now AC4's overlap and touching-endpoint checks have the required existing 10:00–11:00 booking to test against (e.g., a 11:00–12:00 candidate touches at the endpoint and is not flagged as an overlap by the existing logic, while a 10:30–11:30 candidate correctly is).
+
+No other files were modified, and the overlap rule (touching endpoints allowed) in `src/lib/availability.ts` is unchanged.
 ```
 
 **Cleanup prompt, as sent, and Bolt's answer:**
 
 ```text
-(paste here)
+Review only the dependency list in package.json (especially the unused @supabase/supabase-js dependency) for unnecessary duplication, confusing naming, or UI feedback problems. Suggest one small cleanup. Do not add features or redesign the whole application. Implement it only if it preserves AC1–AC6.
+
+BOLTs answer:
+626f6c742d63632d6167656e74Reviewing the dependency list: `@supabase/supabase-js` is declared as a runtime dependency but is never imported anywhere in `src/` — the app uses in-memory fictional sample data only, per the original requirements. It's the only clearly unused dependency, and removing it has no effect on validation logic or UI feedback.
+
+One small cleanup: remove the unused `@supabase/supabase-js` dependency. This preserves AC1–AC6 because none of them depend on any backend — the availability check runs entirely on the in-memory sample data.Build still passes.
+
+**Cleanup made**
+
+Removed `@supabase/supabase-js` from the `dependencies` list in `package.json`. It was declared as a runtime dependency but never imported anywhere in `src/` — the Room Availability Checker runs entirely on in-memory fictional sample data, so the package was dead weight. No other dependencies were duplicated or confusingly named, and the UI feedback comes from `lucide-react` icons and Tailwind, both of which are still in use.
+
+This preserves AC1–AC6: none of the acceptance criteria touch a backend, so dropping an unused client library has no effect on validation, the Available/Unavailable decision, or the responsive layout.
 ```
 
 Add further blocks for further prompts.
@@ -143,8 +166,11 @@ the AC (or the scope) that justifies it.
 
 | # | What Bolt changed or suggested | accept / reject | Reason — cite the AC or the scope | Retest: which cases, result |
 | --- | --- | --- | --- | --- |
-| 1 | | accept / reject | | |
-| 2 | | accept / reject | | |
+| # | What Bolt changed or suggested | accept / reject | Reason — cite the AC or the scope | Retest: which cases, result |
+| --- | --- | --- | --- | --- |
+| 1 | Corrected fictional booking data in `src/data/rooms.ts`. | accept | The change makes the required test baseline reproducible without modifying the availability logic (AC3, AC4). | T1–T9: passed after retesting. |
+| 2 | Removed the unused Supabase dependency from `package.json`. | accept | The application uses local fictional data and does not require a database or backend. Removing the unused dependency preserves the project scope and AC1–AC6. | T1–T9: pending final retest. |
+
 
 ---
 
@@ -154,8 +180,8 @@ Two to four concrete changes, each one retested.
 
 | # | Issue | Decision | Change (file or component) | Result after retest |
 | --- | --- | --- | --- | --- |
-| 1 | | | | |
-| 2 | | | | |
+| 1 | The original sample data did not match the required testing conditions. | Fix | Modified `src/data/rooms.ts`: removed the extra 17:00–18:00 booking from Beacon 204 and added a 10:00–11:00 booking to blocked Cedar Lab. | T1–T9 passed after the change. |
+| 2 | The generated project contained an unused Supabase dependency. | Fix | Removed `@supabase/supabase-js` from the dependencies in `package.json`. | Build passed; final regression testing pending. |
 
 ---
 
@@ -165,9 +191,10 @@ Pick one file or component Bolt generated that matters for AC1–AC5 — the one
 availability is the best choice. Name its path in backticks, then explain in your own words, without
 the assistant, what it does and how it decides. 60 words or more.
 
-**File:** `(write here, e.g. src/App.tsx)`
+**File:** `src/lib/availability.ts`
 
 <!-- Write your explanation below this line -->
+The file `src/lib/availability.ts` contains the main logic for checking room availability. The `checkAvailability` function receives a room, a requested time interval, and the current time. It first checks whether the interval is valid, begins in the future, and lasts no more than 120 minutes. It also checks whether the room is blocked and whether the interval overlaps an existing booking. The `overlaps` function allows bookings to touch at their endpoints. Finally, it returns "available" or "unavailable" with reasons, without modifying any booking data.
 
 ---
 
@@ -179,7 +206,7 @@ The same IDs as `known_fails` in `submission.yml`. Write `none` if the run is cl
 
 | Check | Why it stays |
 | --- | --- |
-| | |
+| none | All 27 checks passed after completing the report and testing the final prototype. |
 
 ### 9.2 The end of the day
 
@@ -187,14 +214,14 @@ AC1 allows `end ≤ 1440` — a booking may end at 24:00. Can a user of your fin
 23:00–24:00? How — and if not, why is that acceptable or not? (This is the value you declare in
 `submission.yml` under `assumptions.end_of_day`.)
 
--
+- The final application uses a standard HTML time input, which allows values from 00:00 to 23:59. I tried to enter 24:00 as the end time, but the input did not accept it. The latest possible end time was 23:59. For example, a booking from 23:00 to 23:59 returned "Available". However, AC1 allows the end time to be 1440 minutes (24:00). Therefore, this is a limitation of the final prototype. It could be improved by adding a separate "End of day (24:00)" option.
 
 ### 9.3 Which "now"?
 
 AC1 says "after the supplied current time". What did **v1** use as the current time, and what did
 that mean for testing case T6?
 
--
+- In v1, the CURRENT TIME field was initially filled with the computer's local time. However, the user could change this value manually. For testing T6, I set the supplied current time to 09:00 and requested a booking from 09:00 to 09:30. The application returned "Unavailable" and explained that the start time must be after the current time. This showed that the validation used the supplied current time instead of always using the computer's actual time.
 
 ---
 
@@ -211,3 +238,8 @@ that mean for testing case T6?
      booking data." -->
 
 <!-- Write your conclusion below this line -->
+
+At first, I expected Bolt to make two mistakes: use the computer's current time without allowing manual input and show unclear error messages for incorrect time intervals. However, both predictions were wrong. The first version allowed me to change the current time, and T7 clearly explained why the selected interval was invalid.
+During testing, I found different problems. The sample booking data did not match the required test conditions, and the project contained an unnecessary Supabase dependency. I used two focused prompts to fix these issues without changing the main functionality.
+It would have been wrong to accept a suggestion to add booking storage or a database because the assignment only requires availability checking.
+This practice showed me that a good-looking application is not necessarily correct. For example, T8 checks whether the same request remains available after checking it twice. The final version passed all nine test cases, and I learned why testing is important even when AI generates working code.
