@@ -1,0 +1,41 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class Student {
+  - studentId: String
+  - name: String
+}
+
+class Course {
+  - courseCode: String
+  - title: String
+  - description: String
+}
+
+class CourseOffering {
+  - offeringId: String
+  - section: String
+  - semester: String
+  - capacity: Integer {capacity > 0}
+  - enrolledCount: Integer
+  + getAvailablePlaces(): Integer
+}
+
+class Enrollment {
+  - enrollmentId: String
+  - enrollmentDate: DateTime
+}
+
+Course "1" -- "0..*" CourseOffering : describes >
+Student "1" -- "0..*" Enrollment : holds >
+CourseOffering "1" -- "0..*" Enrollment : has >
+
+note top of CourseOffering
+  <b>Capacity & Uniqueness Constraints:</b>
+  1. capacity > 0 (Positive whole number)
+  2. enrolledCount <= capacity (R2)
+  3. getAvailablePlaces() = capacity - enrolledCount
+  4. Unique constraint on (Student, CourseOffering) in Enrollment (R3)
+end note
+
+@startuml
