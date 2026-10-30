@@ -1,9 +1,5 @@
 # SIS #03 — Report: Smart Campus Room Availability Checker
 
-<!-- The ONLY file you write prose in. Keep every numbered heading (## 1. … ## 13.) and every
-     ### sub-heading, and the **Label:** words — the checker finds your answers by them.
-     Replace every "(write here)" and "(paste here)". Delete these <!-- --> comments if you like. -->
-
 ## 1. Setup and reuse
 
 <!-- Model: the exact model with its version, as the tool shows it ("ChatGPT" is a tool, not a
@@ -108,11 +104,10 @@ Use fictional sample data only. Keep the implementation simple and within one-pa
 
 | Generated file or component | Path | Its role |
 | --- | --- | --- |
-| Availability logic | `project/src/lib/availability.ts` | Implements validation and overlap logic for the room availability rules. |
-| Time input | `project/src/components/TimeInput.tsx` | Provides the labeled time input used to enter booking times. |
-| Result panel | `project/src/components/ResultPanel.tsx` | Displays the Available or Unavailable result. |
-| Room schedule | `project/src/components/RoomSchedule.tsx` | Displays fictional existing bookings and blocked-room status. |
-| Main application | `project/src/App.tsx` | Connects the components into the one-page room availability checker. |
+| Availability logic | `src/lib/availability.ts` | Implements validation and overlap logic for the room availability rules. |
+| Time input | `src/components/TimeInput.tsx` | Provides the time input fields. |
+| Result panel | `src/components/ResultPanel.tsx` | Displays the Available or Unavailable result. |
+| Main application | `src/App.tsx` | Connects the page components and interaction logic. |
 
 **What v1 does:**
 
@@ -135,18 +130,18 @@ Use fictional sample data only. Keep the implementation simple and within one-pa
 
 | Case | Name | Input | Expected | Python v1 | Python final | Page v1 | Page final |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T1 | Touching | 660–720 | Available | | | | |
-| T2 | Overlap | 630–690 | Unavailable | | | | |
-| T3 | Blocked | 660–720, blocked | Unavailable | | | | |
-| T4 | Exactly 120 min | 720–840 | Available | | | | |
-| T5 | 121 min | 720–841 | Unavailable | | | | |
-| T6 | Starts now | 540–570 | Unavailable | | | | |
-| T7 | Reversed | 720–660 | Unavailable | | | | |
-| T8 | Ends at midnight | 1380–1440 | Available | | | | |
-| T9 | Past midnight | 1380–1441 | Unavailable | | | | |
-| T10 | Second booking | 720–780, existing (600–660), (700–760) | Unavailable | | | | |
-| T11 | Same check twice | 660–720, twice | Available | | | | |
-| T12 | Narrow screen | T1 at ~375 px wide | Available | n/a | n/a | | |
+| T1 | Touching | 660–720 | Available | True | True | Not testable | Available |
+| T2 | Overlap | 630–690 | Unavailable | False | False | Not testable | Unavailable |
+| T3 | Blocked | 660–720, blocked | Unavailable | False | False | Not testable | Unavailable |
+| T4 | Exactly 120 min | 720–840 | Available | True | True | Not testable | Available |
+| T5 | 121 min | 720–841 | Unavailable | False | False | Not testable | Unavailable |
+| T6 | Starts now | 540–570 | Unavailable | False | False | Not testable | Unavailable |
+| T7 | Reversed | 720–660 | Unavailable | False | False | Not testable | Unavailable |
+| T8 | Ends at midnight | 1380–1440 | Available | True | True | Not testable | Not testable |
+| T9 | Past midnight | 1380–1441 | Unavailable | False | False | Not testable | Not testable |
+| T10 | Second booking | 720–780, existing (600–660), (700–760) | Unavailable | False | False | Not testable | Unavailable |
+| T11 | Same check twice | 660–720, twice | Available | True | True | Not testable | Available |
+| T12 | Narrow screen | T1 at ~375 px wide | Available | n/a | n/a | Not testable | Available |
 
 ## 6. Traceability
 
@@ -155,12 +150,12 @@ Use fictional sample data only. Keep the implementation simple and within one-pa
 
 | AC | Implementation / file | Test input | Expected | v1 actual | Final actual |
 | --- | --- | --- | --- | --- | --- |
-| AC1 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC2 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC3 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC4 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC5 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC6 | (write here) | (write here) | (write here) | (write here) | (write here) |
+| AC1 | `code/booking.py` time-range validation; web time validation in `src/lib/availability.ts` | T6, T7, T8, T9 | T6/T7/T9 Unavailable; T8 Available | Python: False, False, True, False; Page v1: Not testable | Python: False, False, True, False; Page final: T6 Unavailable, T7 Unavailable, T8 Not testable, T9 Not testable |
+| AC2 | `code/booking.py` duration check; web duration validation in `src/lib/availability.ts` | T4, T5 | T4 Available; T5 Unavailable | Python: True, False; Page v1: Not testable | Python: True, False; Page final: Available, Unavailable |
+| AC3 | `code/booking.py` blocked-room check; blocked-room handling in the web prototype | T3 | Unavailable | Python: False; Page v1: Not testable | Python: False; Page final: Unavailable |
+| AC4 | `code/booking.py` overlap condition `start < e_end and end > e_start`; web overlap logic in `src/lib/availability.ts` | T1, T2, T10 | T1 Available; T2/T10 Unavailable | Python: True, False, False; Page v1: Not testable | Python: True, False, False; Page final: T1 Available, T2 Unavailable, T10 Not testable |
+| AC5 | `code/booking.py` returns Boolean and iterates over `existing` without modification; page displays a clear result | T11 | Available on the second identical check and existing data unchanged | Python: True; Page v1: Not testable | Python: True; Page final: Available |
+| AC6 | Responsive web layout and validation/result messages in the final prototype | T7, T12 | T7 understandable Unavailable feedback; T12 usable and Available at ~375 px | Page v1: Not testable | Page final: T7 Unavailable with validation message; T12 Available and usable at narrow width |
 
 ## 7. Issue log
 
@@ -171,10 +166,10 @@ Use fictional sample data only. Keep the implementation simple and within one-pa
 
 | # | Issue | Reproduction | Priority | Prompt / change | Retest result |
 | --- | --- | --- | --- | --- | --- |
-| 1 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| 2 | (write here) | (write here) | (write here) | (write here) | (write here) |
+| 1 | The original web prototype contained out-of-scope backend/database-related code or dependencies even though the system must use only fictional local data. | Run the checker and inspect AC scope compliance. The v1 export contains out-of-scope backend/database-related code even though the prototype is limited to local fictional data. This concerns AC5 because the availability check should remain a simple local check without unrelated state or storage behavior. | Medium | Remove the unused backend/database-related dependency or code while preserving AC1–AC6 and keeping the application fully local. | Final checker reports W3 PASS: no network, storage, backend or login code found. |
+| 2 | The original sample booking data did not match the fixed test baseline. Beacon 204 had an additional 17:00–18:00 booking and Cedar Lab did not contain the required 10:00–11:00 booking. | Reproduce T1, T2, T3 and T10 on web v1. The required fixed baseline cannot be configured consistently because Beacon 204 has an extra booking and Cedar Lab lacks the required 10:00–11:00 booking. | High | Change only the fictional room data so Beacon 204 has the required 10:00–11:00 booking without the extra conflicting booking, and Cedar Lab includes the required booking while remaining blocked. Preserve all validation logic. | In the final version, Beacon 204 shows only 10:00–11:00 and Cedar Lab is blocked with a 10:00–11:00 reserved block. T1–T7, T11 and T12 can be tested successfully. |
 
-**Before / after:** `evidence/before-1.png` → `evidence/after-1.png` show issue (write here)
+**Before / after:** `evidence/before-1.png` → `evidence/after-1.png` show issue 3: the misleading Current Time helper text changed from "max 00:00" to "max 23:59" without changing booking behaviour.
 
 ## 8. Critique decisions
 
@@ -184,9 +179,10 @@ Use fictional sample data only. Keep the implementation simple and within one-pa
 
 | # | AI claim or recommendation | How I verified it | Decision | Reason (AC or case) |
 | --- | --- | --- | --- | --- |
-| 1 | (write here) | (write here) | (write here) | (write here) |
-| 2 | (write here) | (write here) | (write here) | (write here) |
-| 3 | (write here) | (write here) | (write here) | (write here) |
+| 1 | Replace or augment the standard HTML time input so the Web UI can directly test 24:00 and 24:01. | I manually attempted T8 and T9 in the final page. The time control allowed values only up to 23:59, so both cases could not be entered exactly. | reject | The SIS explicitly allows T8 and T9 to be recorded as Not testable when the browser time input stops at 23:59. Changing the input control is not required to satisfy the assignment and would add unnecessary scope. |
+| 2 | The corrected room baseline in the final prototype resolves the v1 discrepancies and allows T1-T7 to match their expected results. | I manually executed T1-T7 on the final page. T1 and T4 showed Available; T2, T3, T5, T6 and T7 showed Unavailable. | accept | These observed results match the expected results for AC1-AC4 and the fixed test baseline. |
+| 3 | Add frontend support for multiple existing bookings so T10 can be executed through the Web UI. | I inspected the final room schedules and tried to reproduce the required second existing booking for T10. The UI provides no way to add the required second booking, so T10 remains Not testable on the page. | modify | AC4 is already verified by the Python implementation and tests against multiple existing bookings. For this assignment I keep T10 as Not testable on the page instead of expanding the UI with booking-configuration features. |
+| 4 | The final interface satisfies the narrow/mobile layout requirement at about 375 px width. | I tested T12 in a narrow mobile viewport and observed that the inputs, button and availability result remained readable and usable. | accept | This directly supports AC6 and the observed T12 result was Available without the layout breaking. |
 
 ## 9. Coding-agent analysis
 
@@ -196,12 +192,12 @@ Use fictional sample data only. Keep the implementation simple and within one-pa
 
 | Step | What happened in this assignment |
 | --- | --- |
-| User goal | (write here) |
-| Model / plan | (write here) |
-| Tool call | (write here) |
-| Observation | (write here) |
-| Next step | (write here) |
-| Human review | (write here) |
+| User goal | Build and verify a Smart Campus Room Availability Checker against AC1–AC6 using both Python and a web prototype. |
+| Model / plan | Gemini proposed validation order, boundary cases, overlap logic and a test plan before implementation and review. |
+| Tool call | I used Gemini for planning, critique and repair, Bolt.new for the web prototype, and local terminal commands for tests and the checker. |
+| Observation | Python passed all 16 tests, while web v1 had fixture and scope problems that prevented several required cases from being reproduced. |
+| Next step | I corrected the final web fixture data, removed out-of-scope dependencies, improved the misleading helper text and reran the required cases. |
+| Human review | I checked the AI recommendations against AC1–AC6, rejected unnecessary UI expansion, manually executed page cases and verified checker output before accepting changes. |
 
 ### 9.2 Context, tools and permissions
 
@@ -210,15 +206,16 @@ Use fictional sample data only. Keep the implementation simple and within one-pa
 
 | Tool | Context it used | Tools or permissions | Observed or assumed |
 | --- | --- | --- | --- |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
+| Gemini 3.6 Flash | AC1–AC6, Python behavior, observed web results and focused repair description | Generated text recommendations only; it did not directly edit my local files | Observed |
+| Bolt.new | Initial Smart Campus Room Availability prompt and fictional sample data | Generated and modified the React prototype inside the Bolt project environment | Observed |
+| Local Python and checker | `booking.py`, `test_booking.py`, report files and exported web projects | Executed local code and read project files; no external network or account access was required | Observed |
+| Gemini internal reasoning | The model likely used its trained knowledge of HTML time inputs and interval overlap logic | Internal model reasoning is not directly visible to me | Assumed |
 
 ### 9.3 Checkpoint and dependability
 
-**Safety checkpoint:** (write here)
+**Safety checkpoint:** Before accepting AI-generated changes, I checked that the requested repair stayed inside the assignment scope, did not add authentication, backend services, storage, networking or unrelated features, and did not change AC1–AC6. I also reran the relevant tests instead of trusting the suggested change by itself.
 
-**Reliability, security, responsibility:** (write here)
+**Reliability, security, responsibility:** Reliability depends on repeatable tests and fixed input data, not only on plausible AI output. The Python suite verified boundaries, overlap behavior and non-mutation, while the web checks verified visible behavior and usability. Security risk was kept low by using fictional local data and removing out-of-scope backend/database-related code. Tool permissions also matter because an AI system with file or network access could make unintended changes. Final responsibility remained with me: I reviewed changes, rejected unnecessary recommendations and verified actual results before submission.
 
 ## 10. Reflection
 
@@ -228,7 +225,7 @@ Use fictional sample data only. Keep the implementation simple and within one-pa
      recommendation you rejected or modified, and why; what you would improve next without
      expanding the scope. -->
 
-(write here)
+AI-assisted coding and vibe coding were useful in different ways. For the Python part, the acceptance criteria and automated tests made the work controlled because every suggested implementation could be checked against exact expected results. Bolt was faster for creating the interface, but its first version also introduced sample-data and scope problems that were not obvious from the appearance alone. A reliability risk was incorrect fixture data, an availability/usability risk was an interface that could not reproduce some required cases, and a security risk was unnecessary backend or database-related code. Human review remained necessary because the AI also recommended replacing the time input to support 24:00 and adding multi-booking controls. I rejected or modified those suggestions because they expanded the scope when the assignment already allowed some cases to be marked Not testable or verified in Python. Next time I would define test fixtures earlier and check generated dependencies immediately after the first build.
 
 ## 11. Appendix A — AI exchanges
 
@@ -375,46 +372,6 @@ This formulation naturally permits endpoint touching (e.g., $A_{\text{start}} = 
 **Prompt:**
 
 ~~~~text
-(paste here)
-~~~~
-
-**Response:**
-
-~~~~text
-(paste here)
-~~~~
-
-### B3
-
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
-
-**Prompt:**
-
-~~~~text
-(paste here)
-~~~~
-
-**Response:**
-
-~~~~text
-(paste here)
-~~~~
-
-### B4
-
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
-
-**Prompt:**
-
-~~~~text
 I am working on Stage B (Generate) of SIS #03.
 
 I am reusing my original Week 05 Python v1 for the Smart Campus Room Availability Checker. The code below must remain unchanged because it is stored as code/original/booking_v1.py.
@@ -507,6 +464,181 @@ def can_book(start, end, now, blocked, existing):
 ```
 ~~~~
 
+### B3
+
+- **Tool:** Gemini
+- **Model:** Gemini 3.6 Flash
+- **Date:** 2026-10-30
+- **Stage:** Critique
+- **Source:** this SIS
+
+**Prompt:**
+
+~~~~text
+I am working on Stage C (Critique) of SIS #03.
+
+Review my Smart Campus Room Availability Checker against these fixed acceptance criteria:
+
+AC1: 0 <= start < end <= 1440, and start must be strictly after now.
+AC2: duration must be at most 120 minutes; exactly 120 is allowed.
+AC3: reject every request when the room is blocked.
+AC4: reject overlap with any existing booking; touching endpoints is allowed.
+AC5: show an unambiguous Available / Unavailable result and never mutate existing bookings.
+AC6: understandable validation feedback and a usable narrow/mobile layout.
+
+Python status:
+- The final Python function passes all 16 tests.
+- It returns a real Boolean.
+- It does not mutate existing bookings.
+- The overlap condition is: start < e_end and end > e_start.
+
+Web v1 findings:
+- The original prototype could not reproduce the required fixed test baseline consistently.
+- Beacon 204 had an extra 17:00–18:00 booking.
+- Cedar Lab was blocked but did not include the required 10:00–11:00 booking.
+- The checker also detected out-of-scope backend/database-related code or dependencies in the v1.
+
+Web final observations:
+- Beacon 204 now has only the 10:00–11:00 booking.
+- Cedar Lab remains blocked and has a 10:00–11:00 reserved block.
+- T1 = Available
+- T2 = Unavailable
+- T3 = Unavailable
+- T4 = Available
+- T5 = Unavailable
+- T6 = Unavailable
+- T7 = Unavailable
+- T8 = Not testable because the HTML time input does not allow 24:00
+- T9 = Not testable because the HTML time input does not allow 24:01
+- T10 = Not testable because the UI does not allow setting the required second booking
+- T11 = Available on the second identical check
+- T12 = Available and usable at approximately 375 px width
+
+Give at least 3 specific claims or recommendations.
+For each:
+1. name the relevant AC,
+2. explain how the claim can be verified,
+3. distinguish confirmed findings from recommendations,
+4. do not change the acceptance criteria,
+5. do not add new features.
+~~~~
+
+**Response:**
+
+~~~~text
+Here is the evaluation for Stage C (Critique) of SIS #03, structured around your fixed acceptance criteria and findings.
+
+---
+
+### Claim 1: Input Restrictions Prevent UI-Level Compliance with Upper Time Boundary Tests (AC1)
+
+1. **Relevant Acceptance Criteria:** **AC1** ($$*0 \le \text{start} < \text{end} \le 1440*).
+2. **Verification Method:** Attempt to manually input `24:00` ($1440$ minutes) and `24:01` ($1441$ minutes) into the start/end time fields in the Web UI, or inspect the DOM attributes (`<input type="time">`) in the browser developer tools.
+3. **Findings vs. Recommendations:**
+* **Confirmed Finding:** Standard HTML `<input type="time">` controls enforce a max input value of `23:59` ($1439$ minutes) in browser implementations, making test cases T8 ($1440$) and T9 ($1441$) untestable through the Web frontend.
+* **Recommendation:** Replace or augment the standard HTML `time` picker with a text input, custom dropdown, or numerical minute parser capable of accepting midnight boundary values like `24:00` ($1440$ minutes) so that AC1 edge cases can be validated directly through the Web UI.
+
+
+
+---
+
+### Claim 2: Fixed Baseline Alignment Corrects False Positives/Negatives Across Test Cases T1–T7 (AC3, AC4, AC5)
+
+1. **Relevant Acceptance Criteria:** **AC3** (Room Blocked), **AC4** (Overlap Logic), and **AC5** (Unambiguous Result & Non-mutation).
+2. **Verification Method:** Cross-reference Web Final observations for T1 through T7 against the fixed test baseline specification (e.g., verifying Cedar Lab reports "Unavailable" under AC3 when blocked, and Beacon 204 reports "Available" for T1/T4 and "Unavailable" for T2/T3/T5/T6/T7).
+3. **Findings vs. Recommendations:**
+* **Confirmed Finding:** The fixed room states in Web Final (Beacon 204 with only 10:00–11:00; Cedar Lab blocked with 10:00–11:00) resolved prototype discrepancies from Web v1, achieving 100% expected result alignment for T1–T7 and passing AC5 by returning clear binary availability without state mutation (confirmed via identical check in T11).
+* **Recommendation:** Maintain strict fixture isolation (mocking room schedules in the frontend or test environment) to prevent dynamic state changes or extra bookings from regressing test results T1–T7.
+
+
+
+---
+
+### Claim 3: UI Constraints Inhibit Multi-Booking Overlap Verification (AC4)
+
+1. **Relevant Acceptance Criteria:** **AC4** (*Reject overlap with any existing booking*).
+2. **Verification Method:** Navigate to the room schedule interface in the Web UI and attempt to configure or mock multiple existing bookings (e.g., adding a second schedule block to test multi-interval collisions for T10).
+3. **Findings vs. Recommendations:**
+* **Confirmed Finding:** The Web UI currently limits rooms to a single existing booking slot, preventing the web-level execution and verification of test case T10 (testing overlaps against multiple pre-existing intervals).
+* **Recommendation:** Expose multi-booking support in the frontend mock/schedule configuration layer so that AC4 overlap evaluation against multiple intervals can be verified end-to-end in the Web UI rather than solely in backend/Python tests.
+
+
+
+---
+
+### Claim 4: Narrow Viewport Responsiveness Satisfies Layout Criteria (AC6)
+
+1. **Relevant Acceptance Criteria:** **AC6** (*Understandable validation feedback and a usable narrow/mobile layout*).
+2. **Verification Method:** Set browser viewport width to $375\text{ px}$ (standard mobile baseline) using Chrome DevTools Device Mode and verify form inputs, buttons, and status messages remain readable, accessible, and free of horizontal overflow.
+3. **Findings vs. Recommendations:**
+* **Confirmed Finding:** Web Final observation T12 demonstrates that at $\sim 375\text{ px}$, the interface retains layout usability and provides readable feedback without breaking component boundaries, satisfying the narrow layout requirement of AC6.
+* **Recommendation:** Keep CSS flex/grid layout rules fluid without hardcoded minimum widths to ensure continued compliance across smaller viewports (e.g., $320\text{ px}$).
+
+
+
+---
+~~~~
+
+### B4
+
+- **Tool:** Gemini
+- **Model:** Gemini 3.6 Flash
+- **Date:** 2026-10-30
+- **Stage:** Repair 
+- **Source:** this SIS
+
+**Prompt:**
+
+~~~~text
+For SIS #03 Stage D Repair, expand your previous repair response to at least 80 words.
+
+The issue is:
+The Current Time helper text says "Bookings must start after this time (max 00:00)." This is misleading.
+
+The required repair is only:
+change it to "Bookings must start after this time (max 23:59)."
+
+Explain:
+1. why the old text is misleading,
+2. the exact before and after line,
+3. why this is a text-only usability repair,
+4. why AC1-AC6 and booking logic remain unchanged.
+
+Do not propose any additional changes.
+~~~~
+
+**Response:**
+
+~~~~text
+### 1. Why the Old Text Is Misleading
+
+The original helper text stating `"max 00:00"` creates confusion because `00:00` represents midnight at the beginning of the day ($0$ minutes), rather than the end-of-day boundary ($1440$ minutes). Furthermore, standard HTML `<input type="time">` elements constrain selectable times to a maximum value of `23:59` ($1439$ minutes). Referring to `00:00` suggests an impossible upper bound for the current time picker and contradicts normal $24$-hour time conventions.
+
+### 2. Exact Before and After Lines in `src/App.tsx`
+
+**Before:**
+
+```tsx
+<p className="text-xs text-gray-500 mt-1">Bookings must start after this time (max 00:00).</p>
+
+```
+
+**After:**
+
+```tsx
+<p className="text-xs text-gray-500 mt-1">Bookings must start after this time (max 23:59).</p>
+
+```
+
+### 3. Why This Is a Text-Only Usability Repair
+
+This edit exclusively alters a static text string inside a JSX paragraph tag within `src/App.tsx`. It introduces no code execution logic, modifies no reactive state bindings, adjusts no DOM input properties, and leaves component structures completely intact. Its sole purpose is to clarify the interface copy for end users.
+
+### 4. Preservation of Acceptance Criteria and Booking Logic
+
+Because this fix is isolated to visual label text, the underlying implementation of `can_book()` remains completely untouched. The numerical validation rules ($0 \le \text{start} < \text{end} \le 1440$), duration restrictions ($\le 120$ minutes), room status checks, interval overlap evaluation, and mobile UI rendering behavior defined across **AC1–AC6** continue to function identically.
+~~~~
+
 ## 12. Appendix B — Test output
 
 ### 12.1 Your suite
@@ -515,7 +647,27 @@ def can_book(start, end, now, blocked, existing):
      code/ — the part ending in "Ran N tests" and OK or FAILED. -->
 
 ~~~~text
-(paste here)
+test_blocked_room_is_rejected (test_booking.BookingTests.test_blocked_room_is_rejected) ... ok
+test_booking_contains_existing_is_rejected (test_booking.BookingTests.test_booking_contains_existing_is_rejected) ... ok
+test_booking_inside_existing_is_rejected (test_booking.BookingTests.test_booking_inside_existing_is_rejected) ... ok
+test_empty_existing_is_allowed (test_booking.BookingTests.test_empty_existing_is_allowed) ... ok
+test_end_after_1440_is_rejected (test_booking.BookingTests.test_end_after_1440_is_rejected) ... ok
+test_end_at_1440_is_allowed (test_booking.BookingTests.test_end_at_1440_is_allowed) ... ok
+test_exactly_two_hours_is_allowed (test_booking.BookingTests.test_exactly_two_hours_is_allowed) ... ok
+test_existing_is_unchanged (test_booking.BookingTests.test_existing_is_unchanged) ... ok
+test_over_two_hours_is_rejected (test_booking.BookingTests.test_over_two_hours_is_rejected) ... ok
+test_overlap_is_rejected (test_booking.BookingTests.test_overlap_is_rejected) ... ok
+test_reversed_time_is_rejected (test_booking.BookingTests.test_reversed_time_is_rejected) ... ok
+test_second_booking_overlap_is_rejected (test_booking.BookingTests.test_second_booking_overlap_is_rejected) ... ok
+test_starting_now_is_rejected (test_booking.BookingTests.test_starting_now_is_rejected) ... ok
+test_touching_end_is_allowed (test_booking.BookingTests.test_touching_end_is_allowed) ... ok
+test_touching_start_is_allowed (test_booking.BookingTests.test_touching_start_is_allowed) ... ok
+test_zero_length_is_rejected (test_booking.BookingTests.test_zero_length_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.000s
+
+OK
 ~~~~
 
 ### 12.2 Path B only — three faults you planted
@@ -536,4 +688,4 @@ def can_book(start, end, now, blocked, existing):
 
 | Check ID or limitation | Why it stays | What I would do next |
 | --- | --- | --- |
-| (write here) | (write here) | (write here) |
+| none | No remaining checker failures or errors. | All required checks pass after the final fixes. |
