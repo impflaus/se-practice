@@ -15,8 +15,8 @@
 | --- | --- |
 | Coding assistant (tool) | Gemini |
 | Coding assistant model | Gemini 3.6 Flash |
-| Bolt.new model | (write here) |
-| Bolt project link | (write here) |
+| Bolt.new model | not displayed |
+| Bolt project link | https://bolt.new/p/72154936 |
 | Language | Python |
 | Path | A |
 | Python v1 from | week-05 |
@@ -80,17 +80,27 @@
 
 | Branch in v1 (quoted) | AC | Satisfies it? | Why |
 | --- | --- | --- | --- |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
+| `if blocked:` | AC3 | Yes | It immediately rejects every request when the selected room is blocked. |
+| `if not (0 <= start < end <= 1440 and start > now):` | AC1 | Yes | It checks the valid day bounds, requires start to be before end, and requires the start time to be strictly after now. |
+| `if end - start > 120:` | AC2 | Yes | It rejects only durations greater than 120 minutes, so exactly 120 minutes remains valid. |
+| `if start < e_end and end > e_start:` | AC4 | Yes | Both comparisons must be true for an overlap. When two intervals only touch at an endpoint, one comparison is false, so touching remains allowed. |
+| `return True` | AC5 | Yes | It is reached only after AC1–AC4 pass. The function only iterates over `existing` and does not modify it. |
 
 ## 4. Prototype v1 in Bolt.new
 
 **Prompt as sent:**
 
 ~~~~text
-(paste here)
+Build a small responsive Smart Campus Room Availability Checker. Requirements:
+
+AC1: Accept a candidate interval only when 0 ≤ start < end ≤ 1440 and start is after the supplied current time.
+AC2: Reject a booking longer than 120 minutes.
+AC3: Reject the request when the selected room is blocked.
+AC4: Reject any interval that overlaps an existing booking; touching endpoints are allowed.
+AC5: Show a clear Available / Unavailable decision without changing the existing booking data.
+AC6: The page remains usable at desktop and narrow/mobile width and gives understandable validation feedback.
+
+Use fictional sample data only. Keep the implementation simple and within one-page scope. Do not add authentication, backend services, analytics, or unrelated features. After building, briefly list the main files/components you created.
 ~~~~
 
 <!-- Main generated files or components, with their path inside web/original/
@@ -98,12 +108,20 @@
 
 | Generated file or component | Path | Its role |
 | --- | --- | --- |
-| (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) |
+| Availability logic | `project/src/lib/availability.ts` | Implements validation and overlap logic for the room availability rules. |
+| Time input | `project/src/components/TimeInput.tsx` | Provides the labeled time input used to enter booking times. |
+| Result panel | `project/src/components/ResultPanel.tsx` | Displays the Available or Unavailable result. |
+| Room schedule | `project/src/components/RoomSchedule.tsx` | Displays fictional existing bookings and blocked-room status. |
+| Main application | `project/src/App.tsx` | Connects the components into the one-page room availability checker. |
 
 **What v1 does:**
 
-- (write here)
+- The page displays a Smart Campus Room Availability Checker.
+- The user can select a room and enter a start and end time.
+- The page provides a current time input and a "Use now" button.
+- It displays fictional existing bookings and the selected room status.
+- It provides "Check availability" and "Reset" actions.
+- This is the original Week 06 Bolt version before the later cleanup changes.
 
 ## 5. Test cases — executed on both artifacts
 
@@ -223,31 +241,136 @@
 
 ### B1
 
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
+- **Tool:** Gemini
+- **Model:** Gemini 3.6 Flash
+- **Date:** 2026-10-30
+- **Stage:** Plan
+- **Source:** this SIS
 
 **Prompt:**
 
 ~~~~text
-(paste here)
+I am working on SIS #03 for AI-Driven Software Engineering.
+
+System: Smart Campus Room Availability Checker.
+
+Contract:
+can_book(start, end, now, blocked, existing)
+
+Acceptance criteria:
+AC1: 0 <= start < end <= 1440, and start must be strictly after now.
+AC2: duration must be at most 120 minutes; exactly 120 is allowed.
+AC3: reject every request when the room is blocked.
+AC4: reject overlap with any existing booking; touching endpoints is allowed.
+AC5: return a clear availability result and never mutate existing bookings.
+AC6: understandable validation feedback and usable narrow/mobile layout.
+
+For the Python function, propose a short implementation and testing plan only.
+Do not write the final code yet.
+
+Include:
+1. validation order,
+2. assumptions,
+3. boundary cases,
+4. overlap logic,
+5. tests that should be run.
+
+Do not change the acceptance criteria and do not add new features.
 ~~~~
 
 **Response:**
 
 ~~~~text
-(paste here)
+### 1. Validation Order
+
+To ensure clean error reporting and fast-path rejections, validate inputs in this exact sequence:
+
+1. **AC3 (Room Blocked Check):** Check `blocked == True` first. If blocked, fail immediately.
+2. **AC1 (Time Bounds & Relative Time):**
+* Check structural bounds: $0 \le \text{start} < \text{end} \le 1440$.
+* Check future condition: $\text{start} > \text{now}$.
+
+
+3. **AC2 (Duration Limit):** Check $(\text{end} - \text{start}) \le 120$.
+4. **AC4 & AC5 (Conflict Check & Non-mutation):** Iterate through `existing` safely without modifying the list/tuples to ensure no temporal overlap.
+
+---
+
+### 2. Key Assumptions
+
+* **Time Units:** All times (`start`, `end`, `now`, and intervals in `existing`) are integers representing minutes from midnight ($0$ to $1440$).
+* **Data Types:**
+* `blocked` is a `bool`.
+* `existing` is an iterable of 2-element tuples/lists: `[(e_start, e_end), ...]`.
+
+
+* **Immutability:** The input collections/tuples will be treated as read-only (AC5).
+* **Return Type:** Returns a tuple or structured object: `(is_available: bool, message: str)`.
+
+---
+
+### 3. Boundary Cases to Cover
+
+* **AC1 Bounds:**
+* `start = 0`, `end = 1440` (Midnight limits).
+* `start = now` (Must fail; must be *strictly* after `now`).
+* `start = now + 1` (Smallest valid future offset).
+* `start >= end` or `end > 1440` or `start < 0`.
+
+
+* **AC2 Duration:**
+* `end - start = 120` (Exactly 120 minutes — valid).
+* `end - start = 121` (Invalid).
+
+
+* **AC4 Endpoint Touching:**
+* Existing interval $[100, 120]$:
+* Booking $[80, 100]$ (Touches start endpoint — valid).
+* Booking $[120, 140]$ (Touches end endpoint — valid).
+
+
+
+
+
+---
+
+### 4. Overlap Logic
+
+Two time intervals $[A_{\text{start}}, A_{\text{end}}]$ and $[B_{\text{start}}, B_{\text{end}}]$ overlap if and only if:
+
+$$\text{max}(A_{\text{start}}, B_{\text{start}}) < \text{min}(A_{\text{end}}, B_{\text{end}})$$
+
+Equivalently, booking $A$ and existing booking $B$ conflict if:
+
+
+$$A_{\text{start}} < B_{\text{end}} \quad \text{and} \quad A_{\text{end}} > B_{\text{start}}$$
+
+This formulation naturally permits endpoint touching (e.g., $A_{\text{start}} = B_{\text{end}}$ yields `False` for overlap).
+
+---
+
+### 5. Proposed Test Plan
+
+| Test Category | Test Case Scenario | Expected Result |
+| --- | --- | --- |
+| **AC1 Validation** | `start < 0`, `end > 1440`, or `start >= end` | Reject with invalid range error |
+|  | `start <= now` (e.g., `start = 100, now = 100`) | Reject ("must be strictly after now") |
+|  | `start = now + 1` | Pass (if other criteria met) |
+| **AC2 Duration** | Duration = 120 min | Pass |
+|  | Duration = 121 min | Reject ("duration exceeds 120 min") |
+| **AC3 Blocked** | `blocked = True` with valid times | Reject ("room is blocked") |
+| **AC4 Overlap** | Partial or full overlap with existing booking | Reject ("time slot unavailable") |
+|  | Endpoint touching (`end == e_start` or `start == e_end`) | Pass |
+| **AC5 Side-effects** | Verify `existing` list identity/length post-call | Unchanged |
 ~~~~
 
 ### B2
 
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
+- **Tool:** Gemini
+- **Model:** Gemini 3.6 Flash
+- **Date:** 2026-10-30
+- **Stage:** Generate
+- **Source:** this SIS
 
 **Prompt:**
 
@@ -292,13 +415,96 @@
 **Prompt:**
 
 ~~~~text
-(paste here)
+I am working on Stage B (Generate) of SIS #03.
+
+I am reusing my original Week 05 Python v1 for the Smart Campus Room Availability Checker. The code below must remain unchanged because it is stored as code/original/booking_v1.py.
+
+Please reproduce this exact implementation verbatim in one Python code block. Do not improve, rewrite, shorten, or modify it.
+
+# booking.py
+
+def can_book(start, end, now, blocked, existing):
+    """
+    Checks if a room can be booked based on timing, availability, and existing bookings.
+    
+    Parameters:
+    - start (int): Start time in minutes after midnight.
+    - end (int): End time in minutes after midnight.
+    - now (int): Current time in minutes after midnight (0-1439).
+    - blocked (bool): True if the room is blocked/disabled, False otherwise.
+    - existing (iterable): Sequence of (start, end) tuples of active bookings.
+    
+    Returns:
+    - bool: True if all criteria AC1-AC4 hold, False otherwise.
+    """
+    # AC3: Check if the room is blocked.
+    if blocked:
+        return False
+
+    # AC1: Validate time boundaries and ensure the booking starts in the future.
+    if not (0 <= start < end <= 1440 and start > now):
+        return False
+
+    # AC2: Check that the booking duration is at most 120 minutes.
+    if end - start > 120:
+        return False
+
+    # AC4: Check for overlaps with existing bookings.
+    # Half-open interval overlap rule: [start, end) overlaps with [e_start, e_end)
+    # if start < e_end and end > e_start. Touching endpoints do not overlap.
+    for e_start, e_end in existing:
+        if start < e_end and end > e_start:
+            return False
+
+    # AC5: Return True when all conditions AC1-AC4 pass.
+    return True
 ~~~~
 
 **Response:**
 
 ~~~~text
-(paste here)
+Here is your original `booking_v1.py` implementation reproduced verbatim:
+
+```python
+# booking.py
+
+def can_book(start, end, now, blocked, existing):
+    """
+    Checks if a room can be booked based on timing, availability, and existing bookings.
+    
+    Parameters:
+    - start (int): Start time in minutes after midnight.
+    - end (int): End time in minutes after midnight.
+    - now (int): Current time in minutes after midnight (0-1439).
+    - blocked (bool): True if the room is blocked/disabled, False otherwise.
+    - existing (iterable): Sequence of (start, end) tuples of active bookings.
+    
+    Returns:
+    - bool: True if all criteria AC1-AC4 hold, False otherwise.
+    """
+    # AC3: Check if the room is blocked.
+    if blocked:
+        return False
+
+    # AC1: Validate time boundaries and ensure the booking starts in the future.
+    if not (0 <= start < end <= 1440 and start > now):
+        return False
+
+    # AC2: Check that the booking duration is at most 120 minutes.
+    if end - start > 120:
+        return False
+
+    # AC4: Check for overlaps with existing bookings.
+    # Half-open interval overlap rule: [start, end) overlaps with [e_start, e_end)
+    # if start < e_end and end > e_start. Touching endpoints do not overlap.
+    for e_start, e_end in existing:
+        if start < e_end and end > e_start:
+            return False
+
+    # AC5: Return True when all conditions AC1-AC4 pass.
+    return True
+
+```
 ~~~~
 
 ## 12. Appendix B — Test output
