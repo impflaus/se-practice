@@ -89,7 +89,7 @@ pasted unedited.** Its test file goes to `suites/first/` and is not pasted here:
 (paste here)
 ```
 
-The first suite was saved to `suites/first/` **before** I changed anything in it: yes / no
+The first suite was saved to `suites/first/` **before** I changed anything in it: yes 
 
 ---
 
@@ -102,8 +102,8 @@ requests* · *mocked booking function*, or your own) and the AC that decides it.
 
 | # | Test or part of the suite | What is weak or wrong | Decision: accept / revise / reject | AC or reason |
 | --- | --- | --- | --- | --- |
-| 1 | | | accept / revise / reject | |
-| 2 | | | accept / revise / reject | |
+| 1 | Import of `canBook` | The generated suite imports `./canBook`, but the real function used by the page is in `./booking`. This would prevent the tests from exercising the real module. | revise | The tests must import the real `canBook` used by the page; this affects verification of AC1–AC5. |
+| 2 | AC5 immutability test | The test uses an Available request, saves the original bookings state, checks the Boolean result, and verifies that the bookings array was not changed. | accept | AC5 requires an unambiguous Boolean decision without modifying existing booking data. |
 
 ---
 
@@ -124,7 +124,7 @@ changing per run · no tests discovered). Write `none` in the first row if nothi
 
 | Failing test | Observed failure | First check | Test repair or implementation fix? | Action taken |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| Entire suite / no tests collected | Vitest could not load `./canBook`; the module does not exist at that path. | Checked the import path in `booking.test.ts` against the real module `src/booking.ts`. | Test repair | The generated test imports `./canBook`, but the real function is in `./booking`. The import in the working copy must be changed to `./booking`; `suites/first/` remains unchanged. |
 
 ### 6.2 The improvement prompt
 
@@ -132,7 +132,254 @@ The deck's improvement prompt exactly as sent, followed by the actual output fro
 paste the assistant's answer, unedited:
 
 ```text
-(paste here)
+Review this test suite against AC1–AC6 and our case table. Identify incorrect expectations, weak assertions, duplicated cases, and missing boundaries.
+
+For each proposed change, explain the requirement and the defect it could detect. Improve the tests without changing correct expectations to match buggy behavior.
+
+Use the actual failure output below. Separate test repairs from implementation fixes.
+
+Actual first run:
+
+RUN v2.1.9 /Users/daurenkaztay/Desktop/3year/SE /se-practice/week-07/app
+
+> src/booking.test.ts (0)
+
+FAIL src/booking.test.ts [ src/booking.test.ts ]
+Error: Failed to load url ./canBook (resolved id: ./canBook) in /Users/daurenkaztay/Desktop/3year/SE /se-practice/week-07/app/src/booking.test.ts. Does the file exist?
+
+Test Files 1 failed (1)
+Tests no tests
+Duration47ms (transform 28ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 198ms)
+
+
+Answer:
+### Diagnostic: Why the First Run Failed
+
+The test suite failed during collection due to an import path error:
+
+* **Failure:** `Error: Failed to load url ./canBook`
+* **Cause:** The test imports `./canBook`, but the actual application file in your project is named `./booking` (or located at `./booking.ts`).
+* **Fix:** Update the import statement in `booking.test.ts` to `import { canBook, type CanBookInput, type BookingInterval } from './booking';`.
+
+---
+
+### Test Suite Review & Gap Analysis
+
+#### 1. Incorrect Expectations & Weak Assertions
+
+* **Weak Assertion on AC5 (Immutability):**
+* *Current State:* Evaluates `originalBookings` before and after `canBook()` is called.
+* *Gap/Defect:* It only checks shallow modification of the `bookings` array reference itself. It misses array mutation functions like `.pop()`, `.shift()`, or in-place element mutation if the array elements are reassigned.
+* *Improvement:* Deep-freeze the `bookings` array (`Object.freeze()`) and assert `Object.isFrozen(input.bookings)` to ensure the utility performs strictly read-only operations without side effects.
+
+
+* **AC6 Scope Resolution:**
+* *Requirement:* **AC6** requires UI responsiveness and user-understandable validation feedback.
+* *Clarification:* Unit testing `canBook()` (a pure logic function) cannot verify AC6. AC6 must be flagged as out-of-scope for pure unit testing and routed to integration/component tests.
+
+
+
+#### 2. Missing Boundary Cases
+
+* **AC1 Lower Boundary ($start < 0$):**
+* *Missing Case:* No test checks negative start times (e.g., `start: -1, end: 60`).
+* *Defect Detected:* An implementation that checks `start <= now` without checking `start < 0` would allow negative timestamps.
+
+
+* **AC1 Upper Day Boundary ($end = 1440$):**
+* *Missing Case:* T05 tests `1441` (invalid), and X1 tests `1320–1440`. A minimal 1-minute slot ending at `1440` (e.g., `1439–1440`) verifies the exact boundary condition.
+
+
+* **AC2 Upper Bound Exact Thresholds ($120$ vs $121$):**
+* *Missing Case:* Adding a boundary test for 119 minutes (e.g., `720–839`) ensures strict adherence to the upper threshold limit $\le 120$.
+
+
+* **AC4 Edge Boundary Cases (Multiple Bookings):**
+* *Missing Case:* Testing against an array containing multiple existing bookings (e.g., `[{start: 600, end: 660}, {start: 700, end: 760}]`) to verify non-overlap across disjoint intervals.
+
+
+
+---
+
+### Refactored Test Suite (`src/booking.test.ts`)
+
+```typescript
+import { describe, expect, it } from 'vitest';
+import { canBook, type CanBookInput, type BookingInterval } from './booking';
+
+const DEFAULT_NOW = 540;
+
+const createDefaultFixture = (): {
+  now: number;
+  blocked: boolean;
+  bookings: BookingInterval[];
+} => ({
+  now: DEFAULT_NOW,
+  blocked: false,
+  bookings: [{ start: 600, end: 660 }],
+});
+
+describe('canBook Unit Tests', () => {
+  // AC1: Accept candidate interval only when 0 <= start < end <= 1440 and start > now
+  describe('AC1 - Valid Time Interval & Bounds', () => {
+    it('rejects negative start time (start < 0)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: -1, end: 60 })).toBe(false);
+    });
+
+    it('T02: rejects request starting exactly at current time (540-570)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 540, end: 570 })).toBe(false);
+    });
+
+    it('T03: rejects zero-duration interval (720-720)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 720, end: 720 })).toBe(false);
+    });
+
+    it('T04: rejects inverted interval where start > end (750-720)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 750, end: 720 })).toBe(false);
+    });
+
+    it('T05: rejects interval exceeding 1440 limit (1380-1441)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 1380, end: 1441 })).toBe(false);
+    });
+
+    it('X1: accepts interval up to exact upper boundary of 1440 (1320-1440)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 1320, end: 1440 })).toBe(true);
+    });
+
+    it('accepts exact 1-minute slot ending at 1440 limit (1439-1440)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 1439, end: 1440 })).toBe(true);
+    });
+
+    it('X2: rejects start == now even when bookings list is empty (540-660)', () => {
+      const fixture = createDefaultFixture();
+      expect(
+        canBook({ ...fixture, start: 540, end: 660, bookings: [] })
+      ).toBe(false);
+    });
+  });
+
+  // AC2: Reject booking longer than 120 minutes
+  describe('AC2 - Maximum Duration Limit', () => {
+    it('accepts booking of 119 minutes (720-839)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 720, end: 839 })).toBe(true);
+    });
+
+    it('T06: accepts booking of exactly 120 minutes (720-840)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 720, end: 840 })).toBe(true);
+    });
+
+    it('T07: rejects booking exceeding 120 minutes (720-841)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 720, end: 841 })).toBe(false);
+    });
+  });
+
+  // AC3: Reject request when room is blocked
+  describe('AC3 - Blocked Room Status', () => {
+    it('T13: rejects request on a blocked room (660-720)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 660, end: 720, blocked: true })).toBe(false);
+    });
+  });
+
+  // AC4: Overlap rule (touching endpoints permitted)
+  describe('AC4 - Booking Overlaps & Boundaries', () => {
+    it('T01: accepts request touching endpoint after existing booking (660-720)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 660, end: 720 })).toBe(true);
+    });
+
+    it('T08: accepts request touching endpoint before existing booking (570-600)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 570, end: 600 })).toBe(true);
+    });
+
+    it('T09: rejects request overlapping end of existing booking (630-690)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 630, end: 690 })).toBe(false);
+    });
+
+    it('T10: rejects request completely encapsulating existing booking (570-690)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 570, end: 690 })).toBe(false);
+    });
+
+    it('T11: rejects request inside existing booking (615-645)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 615, end: 645 })).toBe(false);
+    });
+
+    it('T12: rejects request matching existing booking bounds exactly (600-660)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 600, end: 660 })).toBe(false);
+    });
+
+    it('T14: accepts request when no existing bookings exist (630-690)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 630, end: 690, bookings: [] })).toBe(true);
+    });
+
+    it('accepts valid request fitting between two non-adjacent existing bookings', () => {
+      const multipleBookings: BookingInterval[] = [
+        { start: 600, end: 660 },
+        { start: 720, end: 780 },
+      ];
+      expect(
+        canBook({
+          now: DEFAULT_NOW,
+          blocked: false,
+          start: 660,
+          end: 720,
+          bookings: multipleBookings,
+        })
+      ).toBe(true);
+    });
+  });
+
+  // AC5: Available/Unavailable decision without changing existing booking data
+  describe('AC5 - Pure Function Decision & Immutability', () => {
+    it('AC5: returns explicit boolean and leaves frozen input data untouched', () => {
+      const originalBookings: BookingInterval[] = Object.freeze([
+        Object.freeze({ start: 600, end: 660 }),
+      ]) as unknown as BookingInterval[];
+
+      const input: CanBookInput = {
+        start: 660,
+        end: 720,
+        now: DEFAULT_NOW,
+        blocked: false,
+        bookings: originalBookings,
+      };
+
+      const result = canBook(input);
+
+      expect(typeof result).toBe('boolean');
+      expect(result).toBe(true);
+      expect(input.bookings).toHaveLength(1);
+      expect(input.bookings[0]).toEqual({ start: 600, end: 660 });
+    });
+  });
+});
+
+```
+
+---
+
+### Command to Run Tests
+
+```bash
+npx vitest run src/booking.test.ts
+
+```
 ```
 
 ### 6.3 The final run

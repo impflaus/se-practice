@@ -1,130 +1,156 @@
 import { describe, expect, it } from 'vitest';
-import { canBook, type BookingInterval, type CanBookInput } from './canBook'; // Adjust path if needed
+import { canBook, type CanBookInput, type BookingInterval } from './booking';
 
-// Fixed Default Fixtures
 const DEFAULT_NOW = 540;
-const DEFAULT_BLOCKED = false;
-const createDefaultBookings = (): BookingInterval[] => [
-  { start: 600, end: 660 },
-];
 
-function createInput(overrides: Partial<CanBookInput> = {}): CanBookInput {
-  return {
-    start: 660,
-    end: 720,
-    now: DEFAULT_NOW,
-    blocked: DEFAULT_BLOCKED,
-    bookings: createDefaultBookings(),
-    ...overrides,
-  };
-}
+const createDefaultFixture = (): {
+  now: number;
+  blocked: boolean;
+  bookings: BookingInterval[];
+} => ({
+  now: DEFAULT_NOW,
+  blocked: false,
+  bookings: [{ start: 600, end: 660 }],
+});
 
-describe('canBook domain function tests (AC1 - AC5)', () => {
-  // --- AC1: Interval validation (0 <= start < end <= 1440 and start > now) ---
-  describe('AC1: Candidate Interval Validation', () => {
-    it('T02: rejects request starting exactly at current time (start = now)', () => {
-      const input = createInput({ start: 540, end: 570 });
-      expect(canBook(input)).toBe(false);
+describe('canBook Unit Tests', () => {
+  // AC1: Accept candidate interval only when 0 <= start < end <= 1440 and start > now
+  describe('AC1 - Valid Time Interval & Bounds', () => {
+    it('rejects negative start time (start < 0)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: -1, end: 60 })).toBe(false);
     });
 
-    it('T03: rejects zero-duration interval (start === end)', () => {
-      const input = createInput({ start: 720, end: 720 });
-      expect(canBook(input)).toBe(false);
+    it('T02: rejects request starting exactly at current time (540-570)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 540, end: 570 })).toBe(false);
     });
 
-    it('T04: rejects invalid interval where start > end', () => {
-      const input = createInput({ start: 750, end: 720 });
-      expect(canBook(input)).toBe(false);
+    it('T03: rejects zero-duration interval (720-720)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 720, end: 720 })).toBe(false);
     });
 
-    it('T05: rejects request ending past day boundary (end > 1440)', () => {
-      const input = createInput({ start: 1380, end: 1441 });
-      expect(canBook(input)).toBe(false);
+    it('T04: rejects inverted interval where start > end (750-720)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 750, end: 720 })).toBe(false);
     });
 
-    it('X1: accepts maximum valid interval ending at boundary (1440)', () => {
-      const input = createInput({ start: 1320, end: 1440 });
-      expect(canBook(input)).toBe(true);
+    it('T05: rejects interval exceeding 1440 limit (1380-1441)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 1380, end: 1441 })).toBe(false);
     });
 
-    it('X2: rejects start = now even with empty bookings list', () => {
-      const input = createInput({ start: 540, end: 660, bookings: [] });
-      expect(canBook(input)).toBe(false);
-    });
-  });
-
-  // --- AC2: Maximum duration (<= 120 mins) ---
-  describe('AC2: Booking Duration Limits', () => {
-    it('T06: accepts booking of exactly 120 minutes', () => {
-      const input = createInput({ start: 720, end: 840 });
-      expect(canBook(input)).toBe(true);
+    it('X1: accepts interval up to exact upper boundary of 1440 (1320-1440)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 1320, end: 1440 })).toBe(true);
     });
 
-    it('T07: rejects booking exceeding 120 minutes (121 mins)', () => {
-      const input = createInput({ start: 720, end: 841 });
-      expect(canBook(input)).toBe(false);
+    it('accepts exact 1-minute slot ending at 1440 limit (1439-1440)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 1439, end: 1440 })).toBe(true);
+    });
+
+    it('X2: rejects start == now even when bookings list is empty (540-660)', () => {
+      const fixture = createDefaultFixture();
+      expect(
+        canBook({ ...fixture, start: 540, end: 660, bookings: [] })
+      ).toBe(false);
     });
   });
 
-  // --- AC3: Room blocked state ---
-  describe('AC3: Blocked Room Handling', () => {
-    it('T13: rejects request when room is blocked', () => {
-      const input = createInput({ start: 660, end: 720, blocked: true });
-      expect(canBook(input)).toBe(false);
+  // AC2: Reject booking longer than 120 minutes
+  describe('AC2 - Maximum Duration Limit', () => {
+    it('accepts booking of 119 minutes (720-839)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 720, end: 839 })).toBe(true);
+    });
+
+    it('T06: accepts booking of exactly 120 minutes (720-840)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 720, end: 840 })).toBe(true);
+    });
+
+    it('T07: rejects booking exceeding 120 minutes (720-841)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 720, end: 841 })).toBe(false);
     });
   });
 
-  // --- AC4: Overlap checks & endpoint touching ---
-  describe('AC4: Booking Overlap Rules', () => {
-    it('T01: accepts candidate starting when existing booking ends (touches right endpoint)', () => {
-      const input = createInput({ start: 660, end: 720 });
-      expect(canBook(input)).toBe(true);
-    });
-
-    it('T08: accepts candidate ending when existing booking starts (touches left endpoint)', () => {
-      const input = createInput({ start: 570, end: 600 });
-      expect(canBook(input)).toBe(true);
-    });
-
-    it('T09: rejects partial overlap starting inside existing booking', () => {
-      const input = createInput({ start: 630, end: 690 });
-      expect(canBook(input)).toBe(false);
-    });
-
-    it('T10: rejects candidate that completely encompasses existing booking', () => {
-      const input = createInput({ start: 570, end: 690 });
-      expect(canBook(input)).toBe(false);
-    });
-
-    it('T11: rejects candidate completely inside existing booking', () => {
-      const input = createInput({ start: 615, end: 645 });
-      expect(canBook(input)).toBe(false);
-    });
-
-    it('T12: rejects exact matching interval with existing booking', () => {
-      const input = createInput({ start: 600, end: 660 });
-      expect(canBook(input)).toBe(false);
-    });
-
-    it('T14: accepts candidate when bookings array is empty', () => {
-      const input = createInput({ start: 630, end: 690, bookings: [] });
-      expect(canBook(input)).toBe(true);
+  // AC3: Reject request when room is blocked
+  describe('AC3 - Blocked Room Status', () => {
+    it('T13: rejects request on a blocked room (660-720)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 660, end: 720, blocked: true })).toBe(false);
     });
   });
 
-  // --- AC5: Decision output & data immutability ---
-  describe('AC5: Data Immutability & Pure Decision Output', () => {
-    it('returns Boolean decision and leaves input data untouched', () => {
-      const originalBookings: BookingInterval[] = [
+  // AC4: Overlap rule (touching endpoints permitted)
+  describe('AC4 - Booking Overlaps & Boundaries', () => {
+    it('T01: accepts request touching endpoint after existing booking (660-720)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 660, end: 720 })).toBe(true);
+    });
+
+    it('T08: accepts request touching endpoint before existing booking (570-600)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 570, end: 600 })).toBe(true);
+    });
+
+    it('T09: rejects request overlapping end of existing booking (630-690)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 630, end: 690 })).toBe(false);
+    });
+
+    it('T10: rejects request completely encapsulating existing booking (570-690)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 570, end: 690 })).toBe(false);
+    });
+
+    it('T11: rejects request inside existing booking (615-645)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 615, end: 645 })).toBe(false);
+    });
+
+    it('T12: rejects request matching existing booking bounds exactly (600-660)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 600, end: 660 })).toBe(false);
+    });
+
+    it('T14: accepts request when no existing bookings exist (630-690)', () => {
+      const fixture = createDefaultFixture();
+      expect(canBook({ ...fixture, start: 630, end: 690, bookings: [] })).toBe(true);
+    });
+
+    it('accepts valid request fitting between two non-adjacent existing bookings', () => {
+      const multipleBookings: BookingInterval[] = [
         { start: 600, end: 660 },
+        { start: 720, end: 780 },
       ];
-      const frozenInputData = JSON.stringify(originalBookings);
+      expect(
+        canBook({
+          now: DEFAULT_NOW,
+          blocked: false,
+          start: 660,
+          end: 720,
+          bookings: multipleBookings,
+        })
+      ).toBe(true);
+    });
+  });
+
+  // AC5: Available/Unavailable decision without changing existing booking data
+  describe('AC5 - Pure Function Decision & Immutability', () => {
+    it('AC5: returns explicit boolean and leaves frozen input data untouched', () => {
+      const originalBookings: BookingInterval[] = Object.freeze([
+        Object.freeze({ start: 600, end: 660 }),
+      ]) as unknown as BookingInterval[];
 
       const input: CanBookInput = {
         start: 660,
         end: 720,
         now: DEFAULT_NOW,
-        blocked: DEFAULT_BLOCKED,
+        blocked: false,
         bookings: originalBookings,
       };
 
@@ -132,8 +158,8 @@ describe('canBook domain function tests (AC1 - AC5)', () => {
 
       expect(typeof result).toBe('boolean');
       expect(result).toBe(true);
-      expect(JSON.stringify(input.bookings)).toBe(frozenInputData);
-      expect(input.bookings).toBe(originalBookings);
+      expect(input.bookings).toHaveLength(1);
+      expect(input.bookings[0]).toEqual({ start: 600, end: 660 });
     });
   });
 });
