@@ -11,6 +11,7 @@ import {
 import { TimeInput } from "@/components/TimeInput";
 import { ResultPanel } from "@/components/ResultPanel";
 import { RoomSchedule } from "@/components/RoomSchedule";
+import { canBook } from "@/booking";
 
 function nowInMinutes(): number {
   const d = new Date();
@@ -52,9 +53,24 @@ function App() {
     setFormError(null);
 
     const interval = { start, end };
-    const check = checkAvailability(selectedRoom, interval, cur);
-    setResult(check);
-    setLastInterval(interval);
+
+const isAvailable = canBook({
+  start,
+  end,
+  now: cur,
+  blocked: selectedRoom.blocked,
+  bookings: selectedRoom.bookings,
+});
+
+const check = checkAvailability(selectedRoom, interval, cur);
+
+const finalCheck: CheckResult = {
+  ...check,
+  decision: isAvailable ? "available" : "unavailable",
+};
+
+setResult(finalCheck);
+setLastInterval(interval);
   };
 
   const handleReset = () => {

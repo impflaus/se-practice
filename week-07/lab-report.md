@@ -18,8 +18,8 @@ grader find your answers by them. You can add rows to any table, but never remov
 | Assistant that generated the tests (tool) | Gemini |
 | Exact model (with its version, or `not displayed`) | Gemini 3.6 Flash |
 | Where I ran the tests (Bolt terminal / my computer / Codespace) | my computer |
-| Vitest version (the `RUN v…` line of a run) | not run yet |
-| Test command | npx vitest run |
+| Vitest version (the `RUN v…` line of a run) | 2.1.9 |
+| Test command | npm test |
 
 ---
 
@@ -29,15 +29,16 @@ grader find your answers by them. You can add rows to any table, but never remov
 
 | | |
 | --- | --- |
-| File and function (or "inside the page component") | |
-| Its inputs | |
-| What it returned | |
-| How the page used it | |
+| File and function (or "inside the page component") | `src/lib/availability.ts`, function `checkAvailability()` |
+| Its inputs | selected `Room`, candidate `{ start, end }`, and current time in minutes |
+| What it returned | `CheckResult` with an `available` / `unavailable` decision and validation reasons |
+| How the page used it | `src/App.tsx` called it from `handleCheck()` and passed the result to `ResultPanel` |
 
 **What I changed to extract `canBook`.** Say which file it now lives in, what you moved, and why
 the behaviour did not change. Also say which file of the page now calls it. 40 words or more.
 
 <!-- Write below this line -->
+I extracted the booking decision into `src/booking.ts` as `canBook({ start, end, now, blocked, bookings })`. The function returns only a Boolean and contains the same AC1–AC4 decision rules that were already used by the prototype. `src/App.tsx` now imports and calls `canBook` for the availability decision, while the existing `checkAvailability` function is still used to produce detailed validation messages. This keeps the visible behaviour unchanged while giving the tests one independent function to exercise.
 
 ---
 
