@@ -126,16 +126,24 @@ One row per defect. At least **BUG-A and BUG-B**. "Suspected cause" is your hypo
 
 | Check | yes / no |
 | --- | --- |
-| The file is plain UTF-8 text, named exactly `SKILL.md` (not `SKILL.md.txt`) | yes / no |
-| The first and the closing YAML delimiter are exactly three hyphens: `---` | yes / no |
-| `name` is lowercase with hyphens, and `description` says WHEN to use it | yes / no |
-| I read the whole file once: no passwords, API keys or private student data | yes / no |
+| The file is plain UTF-8 text, named exactly `SKILL.md` (not `SKILL.md.txt`) | yes |
+| The first and the closing YAML delimiter are exactly three hyphens: `---` | yes |
+| `name` is lowercase with hyphens, and `description` says WHEN to use it | yes |
+| I read the whole file once: no passwords, API keys or private student data | yes |
 
 **The contents of `skills/bug-detector.zip`.** Paste the listing (Windows: open the ZIP and copy
 the paths; macOS/Linux: `unzip -l skills/bug-detector.zip`):
 
 ```text
-(paste here)
+Archive:  skills/bug-detector.zip
+
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  11-07-2026 22:08   bug-detector/
+        0  10-31-2026 17:36   bug-detector/.gitkeep
+      571  11-07-2026 22:19   bug-detector/SKILL.md
+---------                     -------
+      571                     3 files
 ```
 
 **Installation.** Where you uploaded it, what the upload said, and whether a new chat showed the
@@ -143,6 +151,7 @@ skill as enabled. If upload was not available, write `prompt-only simulation` an
 Screenshot of the result: `evidence/install.png`.
 
 <!-- Write below this line -->
+I used the prompt-only simulation because I did not install the skill through a dedicated skill-upload interface. I pasted the complete contents of `SKILL.md` into a fresh Gemini chat as the first message and clearly stated that it was a prompt-only simulation, not an installed skill. The chat then used that procedure for the debugging diagnosis.
 
 ---
 
