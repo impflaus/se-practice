@@ -162,13 +162,139 @@ the same input you will use in section 6 (AC1–AC6, the failing test output, th
 `canBook`):
 
 ```text
-(paste here)
+Find the root cause of the failed room-booking test. Propose minimal patch and regression test. Do not edit code.
+
+Acceptance criteria:
+
+AC1 Reject start ≥ end and requests in the past.
+AC2 Enforce the maximum allowed duration (120 minutes).
+AC3 Reject a blocked room.
+AC4 Reject overlaps; allow bookings that only touch at endpoints.
+AC5 Return Available / Unavailable without changing booking data.
+AC6 Preserve clear UI feedback on desktop and mobile.
+
+Failing test output:
+
+FAIL src/booking.test.ts > canBook Unit Tests > AC4 - Booking Overlaps & Boundaries > T01: accepts request touching endpoint after existing booking (660-720)
+
+AssertionError: expected false to be true // Object.is equality
+
+Expected:
+true
+
+Received:
+false
+
+The test uses:
+start = 660
+end = 720
+now = 540
+blocked = false
+bookings = [{ start: 600, end: 660 }]
+
+Provided canBook code:
+
+export function canBook({ start, end, now, blocked, bookings }: {
+  start: number;
+  end: number;
+  now: number;
+  blocked: boolean;
+  bookings: { start: number; end: number }[];
+}): boolean {
+  if (!(0 <= start && start < end && end <= 1440)) return false;
+  if (!(start > now)) return false;
+  if (end - start > 120) return false;
+  if (blocked) return false;
+  for (const b of bookings) {
+    if (start <= b.end && end >= b.start) return false;
+  }
+  // keep the room's list current with the slot that was just found free
+  bookings.push({ start, end });
+  return true;
+}
 ```
 
 **The assistant's answer, pasted unedited:**
 
 ```text
-(paste here)
+### Root Cause
+
+The test failure is caused by the overlap check condition inside the `for` loop:
+
+```typescript
+if (start <= b.end && end >= b.start) return false;
+
+```
+
+Using inclusive boundary checks (`<=` and `>=`) treats touching endpoints as an overlap. For a new booking `(660-720)` and an existing booking `(600-660)`:
+
+* `start (660) <= b.end (660)` evaluates to `true`.
+* `end (720) >= b.start (600)` evaluates to `true`.
+
+Consequently, touching bookings trigger a rejection, violating **AC4** ("allow bookings that only touch at endpoints").
+
+**Secondary Violation (AC5):**
+
+Line 17 executes `bookings.push({ start, end })`. This mutates the input array during a availability check, violating **AC5** ("Return Available / Unavailable without changing booking data").
+
+---
+
+### Minimal Patch
+
+Change the overlap comparison from inclusive bounds (`<=`, `>=`) to strict bounds (`<`, `>`), and remove the array mutation (`bookings.push(...)`).
+
+```typescript
+export function canBook({ start, end, now, blocked, bookings }: {
+  start: number;
+  end: number;
+  now: number;
+  blocked: boolean;
+  bookings: { start: number; end: number }[];
+}): boolean {
+  if (!(0 <= start && start < end && end <= 1440)) return false;
+  if (!(start > now)) return false;
+  if (end - start > 120) return false;
+  if (blocked) return false;
+  for (const b of bookings) {
+    if (start < b.end && end > b.start) return false;
+  }
+  return true;
+}
+
+```
+
+---
+
+### Regression Tests
+
+Here are unit test cases covering endpoint touching (AC4) and immutability (AC5):
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { canBook } from './booking';
+
+describe('canBook Unit Tests - AC4 & AC5 Regression', () => {
+  it('T01: accepts request touching endpoint after existing booking (660-720)', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const result = canBook({ start: 660, end: 720, now: 540, blocked: false, bookings });
+    expect(result).toBe(true);
+  });
+
+  it('T02: accepts request touching endpoint before existing booking (540-600)', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const result = canBook({ start: 540, end: 600, now: 500, blocked: false, bookings });
+    expect(result).toBe(true);
+  });
+
+  it('AC5: does not mutate the existing bookings array', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const originalLength = bookings.length;
+    canBook({ start: 660, end: 720, now: 540, blocked: false, bookings });
+    expect(bookings.length).toBe(originalLength);
+  });
+});
+
+```
 ```
 
 ---
@@ -179,16 +305,156 @@ the same input you will use in section 6 (AC1–AC6, the failing test output, th
 Only the question changes, to the deck's skill question:
 
 ```text
-(paste here)
+Use the bug-detector skill to diagnose the failed room-booking test.
+
+Acceptance criteria:
+
+AC1 Reject start ≥ end and requests in the past.
+AC2 Enforce the maximum allowed duration (120 minutes).
+AC3 Reject a blocked room.
+AC4 Reject overlaps; allow bookings that only touch at endpoints.
+AC5 Return Available / Unavailable without changing booking data.
+AC6 Preserve clear UI feedback on desktop and mobile.
+
+Failing test output:
+
+FAIL src/booking.test.ts > canBook Unit Tests > AC4 - Booking Overlaps & Boundaries > T01: accepts request touching endpoint after existing booking (660-720)
+
+AssertionError: expected false to be true // Object.is equality
+
+Expected:
+true
+
+Received:
+false
+
+The test uses:
+start = 660
+end = 720
+now = 540
+blocked = false
+bookings = [{ start: 600, end: 660 }]
+
+Provided canBook code:
+
+export function canBook({ start, end, now, blocked, bookings }: {
+  start: number;
+  end: number;
+  now: number;
+  blocked: boolean;
+  bookings: { start: number; end: number }[];
+}): boolean {
+  if (!(0 <= start && start < end && end <= 1440)) return false;
+  if (!(start > now)) return false;
+  if (end - start > 120) return false;
+  if (blocked) return false;
+  for (const b of bookings) {
+    if (start <= b.end && end >= b.start) return false;
+  }
+  // keep the room's list current with the slot that was just found free
+  bookings.push({ start, end });
+  return true;
+}
 ```
 
 **The assistant's answer, pasted unedited:**
 
 ```text
-(paste here)
+### Root Cause Analysis
+
+Two distinct issues exist in the provided `canBook` implementation:
+
+1. **AC4 Boundary Overlap Violation (Failing Test Cause):**
+The overlap detection check uses non-strict inequality comparisons:
+```typescript
+if (start <= b.end && end >= b.start) return false;
+
 ```
 
-Did the environment show that the skill was invoked? yes / no / not shown
+
+For the test case where `bookings = [{ start: 600, end: 660 }]` and the requested booking is `start = 660, end = 720`:
+* `start <= b.end` (660 <= 660) evaluates to **`true`**
+* `end >= b.start` (720 >= 600) evaluates to **`true`**
+
+
+Because both conditions evaluate to `true`, the function returns `false` (rejecting the booking). Per **AC4**, bookings that only touch at endpoints (where `start === b.end` or `end === b.start`) must be allowed. Two intervals $[A, B]$ and $[C, D]$ overlap if and only if $A < D$ and $B > C$.
+2. **AC5 Data Mutation Violation:**
+Line 17 modifies the input `bookings` array:
+```typescript
+bookings.push({ start, end });
+
+```
+
+
+This mutates caller state during a pure query check, violating **AC5** ("Return Available / Unavailable without changing booking data").
+
+---
+
+### Minimal Patch
+
+Change the overlap check to strict inequalities (`<` and `>`) and remove the side-effect `bookings.push(...)`:
+
+```typescript
+export function canBook({ start, end, now, blocked, bookings }: {
+  start: number;
+  end: number;
+  now: number;
+  blocked: boolean;
+  bookings: { start: number; end: number }[];
+}): boolean {
+  if (!(0 <= start && start < end && end <= 1440)) return false;
+  if (!(start > now)) return false;
+  if (end - start > 120) return false;
+  if (blocked) return false;
+  for (const b of bookings) {
+    if (start < b.end && end > b.start) return false;
+  }
+  return true;
+}
+
+```
+
+---
+
+### Regression Tests
+
+Here is a unit test suite verifying touching endpoints (AC4) and array immutability (AC5):
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { canBook } from './booking';
+
+describe('canBook Unit Tests - AC4 & AC5 Regression', () => {
+  it('AC4 (T01): accepts request touching endpoint after existing booking (660-720)', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const result = canBook({ start: 660, end: 720, now: 540, blocked: false, bookings });
+    expect(result).toBe(true);
+  });
+
+  it('AC4 (T02): accepts request touching endpoint before existing booking (540-600)', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const result = canBook({ start: 540, end: 600, now: 500, blocked: false, bookings });
+    expect(result).toBe(true);
+  });
+
+  it('AC4 (T03): rejects actual overlapping request (630-690)', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const result = canBook({ start: 630, end: 690, now: 540, blocked: false, bookings });
+    expect(result).toBe(false);
+  });
+
+  it('AC5: does not mutate the input bookings array', () => {
+    const bookings = [{ start: 600, end: 660 }];
+    const originalLength = bookings.length;
+    canBook({ start: 660, end: 720, now: 540, blocked: false, bookings });
+    expect(bookings.length).toBe(originalLength);
+  });
+});
+
+```
+```
+
+Did the environment show that the skill was invoked? not shown
 
 ---
 
@@ -199,15 +465,16 @@ tests showed. Write a short verdict in each cell, and give a reason where they d
 
 | Criterion | No skill | With skill |
 | --- | --- | --- |
-| Correct root cause | | |
-| Reproducible test | | |
-| Minimal proposed patch | | |
-| Unsupported claims | | |
-| Clarity of explanation | | |
+| Correct root cause | Correct. It identified the non-strict overlap condition as BUG-A and also noticed the `bookings.push(...)` mutation as BUG-B. | Correct. It identified the same two defects and linked BUG-A to AC4 and BUG-B to AC5. |
+| Reproducible test | Good. It proposed endpoint-touching tests and an immutability test. | Good. It proposed tests for touching endpoints, real overlap, and booking-array immutability. |
+| Minimal proposed patch | Correct. It proposed changing the overlap comparison to strict bounds and removing `bookings.push(...)`. | Correct. It proposed the same minimal fixes without rewriting unrelated logic. |
+| Unsupported claims | No important unsupported claims. The answer was consistent with the provided code and failing test. | No important unsupported claims. The answer stayed consistent with the code and separated the two defects clearly. |
+| Clarity of explanation | Clear, but more direct and less structured around confirmed defects versus hypotheses. | Clearer structure. It separated the AC4 failure from the AC5 mutation and explained each root cause before proposing fixes. |
 
 **Which bugs did each answer find?** (BUG-A, BUG-B, both, neither)
 
--
+- No skill: both BUG-A and BUG-B
+- With skill: both BUG-A and BUG-B
 
 ---
 
@@ -221,7 +488,8 @@ Rerun the test that was failing, then the full suite.
 The change as a diff (`git diff`, or the old and the new line), then the real run:
 
 ```text
-(paste here)
+-    if (start <= b.end && end >= b.start) return false;
++    if (start < b.end && end > b.start) return false;
 ```
 
 ### 8.2 The BUG-B patch and the final run
@@ -229,7 +497,47 @@ The change as a diff (`git diff`, or the old and the new line), then the real ru
 The change as a diff, then the real output of the **full** suite. Every test must pass.
 
 ```text
-(paste here)
+(base) daurenkaztay@Noutbuk-Dauren app % npx vitest run -t "BUG-A"
+
+
+ RUN  v2.1.9 /Users/daurenkaztay/Desktop/3year/SE /se-practice/week-08/app
+
+ ✓ src/booking.test.ts (23)
+   ↓ canBook Unit Tests (21) [skipped]
+     ↓ AC1 - Valid Time Interval & Bounds (8) [skipped]
+       ↓ rejects negative start time (start < 0) [skipped]
+       ↓ T02: rejects request starting exactly at current time (540-570) [skipped]
+       ↓ T03: rejects zero-duration interval (720-720) [skipped]
+       ↓ T04: rejects inverted interval where start > end (750-720) [skipped]
+       ↓ T05: rejects interval exceeding 1440 limit (1380-1441) [skipped]
+       ↓ X1: accepts interval up to exact upper boundary of 1440 (1320-1440) [skipped]
+       ↓ accepts exact 1-minute slot ending at 1440 limit (1439-1440) [skipped]
+       ↓ X2: rejects start == now even when bookings list is empty (540-660) [skipped]
+     ↓ AC2 - Maximum Duration Limit (3) [skipped]
+       ↓ accepts booking of 119 minutes (720-839) [skipped]
+       ↓ T06: accepts booking of exactly 120 minutes (720-840) [skipped]
+       ↓ T07: rejects booking exceeding 120 minutes (720-841) [skipped]
+     ↓ AC3 - Blocked Room Status (1) [skipped]
+       ↓ T13: rejects request on a blocked room (660-720) [skipped]
+     ↓ AC4 - Booking Overlaps & Boundaries (8) [skipped]
+       ↓ T01: accepts request touching endpoint after existing booking (660-720) [skipped]
+       ↓ T08: accepts request touching endpoint before existing booking (570-600) [skipped]
+       ↓ T09: rejects request overlapping end of existing booking (630-690) [skipped]
+       ↓ T10: rejects request completely encapsulating existing booking (570-690) [skipped]
+       ↓ T11: rejects request inside existing booking (615-645) [skipped]
+       ↓ T12: rejects request matching existing booking bounds exactly (600-660) [skipped]
+       ↓ T14: accepts request when no existing bookings exist (630-690) [skipped]
+       ↓ accepts valid request fitting between two non-adjacent existing bookings [skipped]
+     ↓ AC5 - Pure Function Decision & Immutability (1) [skipped]
+       ↓ AC5: returns explicit boolean and leaves frozen input data untouched [skipped]
+   ✓ Week 08 regression tests (2)
+     ✓ BUG-A: accepts request touching bookings on both sides
+     ↓ BUG-B: available request does not mutate bookings [skipped]
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+   Start at  23:14:41
+   Duration  774ms (transform 43ms, setup 0ms, collect 32ms, tests 2ms, environment 0ms, prepare 119ms)
 ```
 
 ---
