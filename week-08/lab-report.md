@@ -28,7 +28,41 @@ The **real** output of your Week 07 suite, run in `week-08/app/` **before** you 
 anything. It should be green. If it is not, say why under the block.
 
 ```text
-(paste here)
+RUN  v2.1.9 /Users/daurenkaztay/Desktop/3year/SE /se-practice/week-08/app
+
+✓ src/booking.test.ts (21)
+  ✓ canBook Unit Tests (21)
+    ✓ AC1 - Valid Time Interval & Bounds (8)
+      ✓ rejects negative start time (start < 0)
+      ✓ T02: rejects request starting exactly at current time (540-570)
+      ✓ T03: rejects zero-duration interval (720-720)
+      ✓ T04: rejects inverted interval where start > end (750-720)
+      ✓ T05: rejects interval exceeding 1440 limit (1380-1441)
+      ✓ X1: accepts interval up to exact upper boundary of 1440 (1320-1440)
+      ✓ accepts exact 1-minute slot ending at 1440 limit (1439-1440)
+      ✓ X2: rejects start == now even when bookings list is empty (540-660)
+    ✓ AC2 - Maximum Duration Limit (3)
+      ✓ accepts booking of 119 minutes (720-839)
+      ✓ T06: accepts booking of exactly 120 minutes (720-840)
+      ✓ T07: rejects booking exceeding 120 minutes (720-841)
+    ✓ AC3 - Blocked Room Status (1)
+      ✓ T13: rejects request on a blocked room (660-720)
+    ✓ AC4 - Booking Overlaps & Boundaries (8)
+      ✓ T01: accepts request touching endpoint after existing booking (660-720)
+      ✓ T08: accepts request touching endpoint before existing booking (570-600)
+      ✓ T09: rejects request overlapping end of existing booking (630-690)
+      ✓ T10: rejects request completely encapsulating existing booking (570-690)
+      ✓ T11: rejects request inside existing booking (615-645)
+      ✓ T12: rejects request matching existing booking bounds exactly (600-660)
+      ✓ T14: accepts request when no existing bookings exist (630-690)
+      ✓ accepts valid request fitting between two non-adjacent existing bookings
+    ✓ AC5 - Pure Function Decision & Immutability (1)
+      ✓ AC5: returns explicit boolean and leaves frozen input data untouched
+
+Test Files  1 passed (1)
+Tests       21 passed (21)
+Start at    21:26:02
+Duration    296ms (transform 20ms, setup 0ms, collect 16ms, tests 3ms, environment 0ms, prepare 31ms)
 ```
 
 ### 2.2 The same suite on the provided canBook
@@ -37,7 +71,22 @@ You copied the whole `canBook` function from `buggy/booking.ts` (or `.js`) over 
 nothing else. This is the real output:
 
 ```text
-(paste here)
+RUN  v2.1.9 /Users/daurenkaztay/Desktop/3year/SE /se-practice/week-08/app
+
+❯ src/booking.test.ts (21)
+
+FAIL src/booking.test.ts > canBook Unit Tests > AC4 - Booking Overlaps & Boundaries > T01: accepts request touching endpoint after existing booking (660-720)
+
+FAIL src/booking.test.ts > canBook Unit Tests > AC4 - Booking Overlaps & Boundaries > T08: accepts request touching endpoint before existing booking (570-600)
+
+FAIL src/booking.test.ts > canBook Unit Tests > AC4 - Booking Overlaps & Boundaries > accepts valid request fitting between two non-adjacent existing bookings
+
+FAIL src/booking.test.ts > canBook Unit Tests > AC5 - Pure Function Decision & Immutability > AC5: returns explicit boolean and leaves frozen input data untouched
+
+Test Files  1 failed (1)
+Tests       4 failed | 17 passed (21)
+Start at    22:01:36
+Duration    391ms
 ```
 
 ### 2.3 One failing test per bug
@@ -47,7 +96,14 @@ Run them **on the buggy code**. Both must fail here. That is the evidence that e
 its bug.
 
 ```text
-(paste here)
+FAIL src/booking.test.ts > Week 08 regression tests > BUG-A: accepts request touching bookings on both sides
+
+FAIL src/booking.test.ts > Week 08 regression tests > BUG-B: available request does not mutate bookings
+
+Test Files  1 failed (1)
+Tests       6 failed | 17 passed (23)
+Start at    22:06:31
+Duration    198ms
 ```
 
 ---
@@ -59,8 +115,8 @@ One row per defect. At least **BUG-A and BUG-B**. "Suspected cause" is your hypo
 
 | Defect | Test ID | Input | Expected | Actual | Suspected cause (line and why) |
 | --- | --- | --- | --- | --- | --- |
-| BUG-A | | | | | |
-| BUG-B | | | | | |
+| BUG-A | BUG-A | request 660–720 with bookings 600–660 and 720–780 | true | false | The overlap condition uses `start <= b.end && end >= b.start`. The non-strict comparisons make endpoint touching count as overlap, although AC4 allows touching. |
+| BUG-B | BUG-B | request 720–780 with booking 600–660 | true and bookings unchanged | true, but bookings changed from one item to two | The line `bookings.push({ start, end })` mutates the original bookings array after an Available request, which violates AC5. |
 
 ---
 

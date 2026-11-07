@@ -163,3 +163,40 @@ describe('canBook Unit Tests', () => {
     });
   });
 });
+
+  describe('Week 08 regression tests', () => {
+    it('BUG-A: accepts request touching bookings on both sides', () => {
+      const bookings: BookingInterval[] = [
+        { start: 600, end: 660 },
+        { start: 720, end: 780 },
+      ];
+
+      expect(
+        canBook({
+          start: 660,
+          end: 720,
+          now: 540,
+          blocked: false,
+          bookings,
+        })
+      ).toBe(true);
+    });
+
+    it('BUG-B: available request does not mutate bookings', () => {
+      const bookings: BookingInterval[] = [
+        { start: 600, end: 660 },
+      ];
+      const before = bookings.map((booking) => ({ ...booking }));
+
+      const result = canBook({
+        start: 720,
+        end: 780,
+        now: 540,
+        blocked: false,
+        bookings,
+      });
+
+      expect(result).toBe(true);
+      expect(bookings).toEqual(before);
+    });
+  });
