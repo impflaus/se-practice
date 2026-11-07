@@ -490,13 +490,7 @@ The change as a diff (`git diff`, or the old and the new line), then the real ru
 ```text
 -    if (start <= b.end && end >= b.start) return false;
 +    if (start < b.end && end > b.start) return false;
-```
 
-### 8.2 The BUG-B patch and the final run
-
-The change as a diff, then the real output of the **full** suite. Every test must pass.
-
-```text
 (base) daurenkaztay@Noutbuk-Dauren app % npx vitest run -t "BUG-A"
 
 
@@ -538,6 +532,53 @@ The change as a diff, then the real output of the **full** suite. Every test mus
       Tests  1 passed | 22 skipped (23)
    Start at  23:14:41
    Duration  774ms (transform 43ms, setup 0ms, collect 32ms, tests 2ms, environment 0ms, prepare 119ms)
+```
+
+### 8.2 The BUG-B patch and the final run
+
+The change as a diff, then the real output of the **full** suite. Every test must pass.
+
+```text
+-  bookings.push({ start, end });
+
+ RUN  v2.1.9 /Users/daurenkaztay/Desktop/3year/SE /se-practice/week-08/app
+
+ ✓ src/booking.test.ts (23)
+   ✓ canBook Unit Tests (21)
+     ✓ AC1 - Valid Time Interval & Bounds (8)
+       ✓ rejects negative start time (start < 0)
+       ✓ T02: rejects request starting exactly at current time (540-570)
+       ✓ T03: rejects zero-duration interval (720-720)
+       ✓ T04: rejects inverted interval where start > end (750-720)
+       ✓ T05: rejects interval exceeding 1440 limit (1380-1441)
+       ✓ X1: accepts interval up to exact upper boundary of 1440 (1320-1440)
+       ✓ accepts exact 1-minute slot ending at 1440 limit (1439-1440)
+       ✓ X2: rejects start == now even when bookings list is empty (540-660)
+     ✓ AC2 - Maximum Duration Limit (3)
+       ✓ accepts booking of 119 minutes (720-839)
+       ✓ T06: accepts booking of exactly 120 minutes (720-840)
+       ✓ T07: rejects booking exceeding 120 minutes (720-841)
+     ✓ AC3 - Blocked Room Status (1)
+       ✓ T13: rejects request on a blocked room (660-720)
+     ✓ AC4 - Booking Overlaps & Boundaries (8)
+       ✓ T01: accepts request touching endpoint after existing booking (660-720)
+       ✓ T08: accepts request touching endpoint before existing booking (570-600)
+       ✓ T09: rejects request overlapping end of existing booking (630-690)
+       ✓ T10: rejects request completely encapsulating existing booking (570-690)
+       ✓ T11: rejects request inside existing booking (615-645)
+       ✓ T12: rejects request matching existing booking bounds exactly (600-660)
+       ✓ T14: accepts request when no existing bookings exist (630-690)
+       ✓ accepts valid request fitting between two non-adjacent existing bookings
+     ✓ AC5 - Pure Function Decision & Immutability (1)
+       ✓ AC5: returns explicit boolean and leaves frozen input data untouched
+   ✓ Week 08 regression tests (2)
+     ✓ BUG-A: accepts request touching bookings on both sides
+     ✓ BUG-B: available request does not mutate bookings
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  23:19:09
+   Duration  344ms (transform 39ms, setup 0ms, collect 29ms, tests 4ms, environment 0ms, prepare 69ms)
 ```
 
 ---
