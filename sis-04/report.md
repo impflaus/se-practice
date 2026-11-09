@@ -14,13 +14,13 @@
 
 | Item | Value |
 | --- | --- |
-| Assistant (tool) | (write here) |
-| Assistant model | (write here) |
-| Starting point | (write here) |
-| Baseline commit | (write here) |
-| Language (ts or js) | (write here) |
-| Vitest version | (write here) |
-| Where I ran the tests | (write here) |
+| Assistant (tool) | Gemini |
+| Assistant model | Gemini 3.6 Flash |
+| Starting point | week-08 |
+| Baseline commit | 138afc8 |
+| Language (ts or js) | ts |
+| Vitest version | 2.1.9 |
+| Where I ran the tests | my computer |
 
 ### 1.1 Baseline run
 
@@ -29,7 +29,44 @@
      "No test files found". That is your honest "original" number, 0/0. -->
 
 ```text
-(paste here)
+ RUN  v2.1.9 /Users/daurenkaztay/Desktop/3year/SE /se-practice/sis-04/app
+
+ ✓ src/booking.test.ts (23)
+   ✓ canBook Unit Tests (21)
+     ✓ AC1 - Valid Time Interval & Bounds (8)
+       ✓ rejects negative start time (start < 0)
+       ✓ T02: rejects request starting exactly at current time (540-570)
+       ✓ T03: rejects zero-duration interval (720-720)
+       ✓ T04: rejects inverted interval where start > end (750-720)
+       ✓ T05: rejects interval exceeding 1440 limit (1380-1441)
+       ✓ X1: accepts interval up to exact upper boundary of 1440 (1320-1440)
+       ✓ accepts exact 1-minute slot ending at 1440 limit (1439-1440)
+       ✓ X2: rejects start == now even when bookings list is empty (540-660)
+     ✓ AC2 - Maximum Duration Limit (3)
+       ✓ accepts booking of 119 minutes (720-839)
+       ✓ T06: accepts booking of exactly 120 minutes (720-840)
+       ✓ T07: rejects booking exceeding 120 minutes (720-841)
+     ✓ AC3 - Blocked Room Status (1)
+       ✓ T13: rejects request on a blocked room (660-720)
+     ✓ AC4 - Booking Overlaps & Boundaries (8)
+       ✓ T01: accepts request touching endpoint after existing booking (660-720)
+       ✓ T08: accepts request touching endpoint before existing booking (570-600)
+       ✓ T09: rejects request overlapping end of existing booking (630-690)
+       ✓ T10: rejects request completely encapsulating existing booking (570-690)
+       ✓ T11: rejects request inside existing booking (615-645)
+       ✓ T12: rejects request matching existing booking bounds exactly (600-660)
+       ✓ T14: accepts request when no existing bookings exist (630-690)
+       ✓ accepts valid request fitting between two non-adjacent existing bookings
+     ✓ AC5 - Pure Function Decision & Immutability (1)
+       ✓ AC5: returns explicit boolean and leaves frozen input data untouched
+   ✓ Week 08 regression tests (2)
+     ✓ BUG-A: accepts request touching bookings on both sides
+     ✓ BUG-B: available request does not mutate bookings
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  17:29:45
+   Duration  427ms (transform 36ms, setup 0ms, collect 27ms, tests 5ms, environment 0ms, prepare 160ms)
 ```
 
 ## 2. Context for the assistant
@@ -40,7 +77,27 @@
      they do. A tree is fine:  src/App.tsx — the page, holds the rooms and the form … -->
 
 ```text
-(paste here)
+app/src/App.tsx — main React page. It stores the selected room and time inputs, calls canBook(), and renders the booking form, result and room schedule.
+
+app/src/booking.ts — contains the canBook() booking decision function for AC1–AC5.
+
+app/src/booking.test.ts — Vitest regression suite from Week 08 with 23 tests for the existing booking rules.
+
+app/src/data/rooms.ts — contains the current fictional room data used by the page.
+
+app/src/lib/availability.ts — contains additional availability helpers such as checkAvailability(), time conversion helpers and constants.
+
+app/src/types.ts — shared TypeScript types such as Room and CheckResult.
+
+app/src/components/TimeInput.tsx — reusable time input component.
+
+app/src/components/ResultPanel.tsx — displays the availability result.
+
+app/src/components/RoomSchedule.tsx — displays the selected room and its schedule.
+
+app/src/main.tsx — React application entry point.
+
+app/src/index.css — global styles and responsive presentation.
 ```
 
 ### 2.2 The context message as sent
@@ -49,7 +106,71 @@
      (no login, payments, live APIs or database; fictional data only). Unedited. -->
 
 ```text
-(paste here)
+I am extending an existing Smart Campus Room Availability Checker for SIS #04.
+
+Do not rewrite the whole application and do not provide code yet. First analyze the current structure, identify maintainability risks with specific file/function references, and propose a small numbered improvement plan. The safest and smallest change should come first.
+
+Current repository map:
+
+app/src/App.tsx — main React page. It stores the selected room and time inputs, calls canBook(), and renders the booking form, result and room schedule.
+
+app/src/booking.ts — contains the canBook() booking decision function for AC1–AC5.
+
+app/src/booking.test.ts — Vitest regression suite from Week 08 with 23 tests for the existing booking rules.
+
+app/src/data/rooms.ts — contains the current fictional room data used by the page.
+
+app/src/lib/availability.ts — contains additional availability helpers such as checkAvailability(), time conversion helpers and constants.
+
+app/src/types.ts — shared TypeScript types such as Room and CheckResult.
+
+app/src/components/TimeInput.tsx — reusable time input component.
+
+app/src/components/ResultPanel.tsx — displays the availability result.
+
+app/src/components/RoomSchedule.tsx — displays the selected room and its schedule.
+
+app/src/main.tsx — React application entry point.
+
+app/src/index.css — global styles and responsive presentation.
+
+Existing requirements that must remain unchanged:
+
+AC1 Reject start >= end and requests in the past.
+AC2 Enforce the maximum allowed duration of 120 minutes.
+AC3 Reject a blocked room.
+AC4 Reject overlaps; allow bookings that only touch at endpoints.
+AC5 Return Available / Unavailable without changing booking data.
+AC6 Clear, responsive feedback on desktop and mobile.
+
+New SIS #04 requirements:
+
+F1 Capacity filter: room capacity must be greater than or equal to the requested attendees.
+F2 Equipment filter: the room must contain ALL selected required items.
+F3 A blocked room cannot be reported as available.
+F4 Show a clear empty state when no rooms match.
+F5 Changing the selected room must refresh the availability result appropriately, and the availability check must use that room's own bookings.
+
+Constraints:
+
+- No login.
+- No payments.
+- No live APIs.
+- No database.
+- Fictional data only.
+- At least four rooms.
+- Each room must have id, name, capacity, equipment, blocked status and its own bookings.
+- The final required modules are rooms.ts, filter.ts, booking.ts and the UI.
+- canBook() behavior for AC1–AC5 must remain unchanged.
+- Make small changes, not a full rewrite.
+- Do not provide implementation code yet.
+
+Please:
+1. Identify at least three maintainability risks in the current structure, naming the relevant file or function.
+2. Explain why each risk matters for AC1–AC6 or F1–F5.
+3. Give each risk a High, Medium or Low priority.
+4. Propose a numbered improvement plan with the smallest safe step first.
+5. Include at least one suggestion that could reasonably be rejected or modified, so I can evaluate it myself.
 ```
 
 ## 3. Codebase analysis (Task 1)
@@ -62,24 +183,27 @@
 
 | # | Risk | Where (file / function) | Evidence | Priority |
 | --- | --- | --- | --- | --- |
-| 1 | (write here) | (write here) | (write here) | High / Medium / Low |
-| 2 | (write here) | (write here) | (write here) | High / Medium / Low |
-| 3 | (write here) | (write here) | (write here) | High / Medium / Low |
+| 1 | Booking logic and UI flow are too tightly coupled | `src/App.tsx`, `handleCheck()` | `handleCheck()` parses time input, calls `canBook()`, also calls `checkAvailability()`, combines both results, and updates UI state in the same function. This makes future F1-F5 changes harder to test independently. | High |
+| 2 | Availability is calculated through two different paths | `src/App.tsx`, `handleCheck()`; `src/booking.ts`; `src/lib/availability.ts` | `handleCheck()` calls both `canBook()` and `checkAvailability()`, then overwrites the decision in `finalCheck`. Two rule paths can diverge and create inconsistent AC1-AC5 results. | High |
+| 3 | Room changing does not explicitly clear the previous availability result | `src/App.tsx`, room `<select>` | The room selector only calls `setRoomId(e.target.value)`. The existing `result` and `lastInterval` remain until another availability check is performed, which is a risk for F5. | High |
+| 4 | The required filtering module does not exist yet | `src/` | There is no `src/filter.ts`. Capacity and equipment filtering required by F1 and F2 therefore have no isolated module that can be tested independently. | Medium |
 
 ### 3.2 Improvement plan — before editing
 
 <!-- Numbered, in the order you will do it, smallest safe step first. Written BEFORE you change
      code: the commit that adds this section comes before the commit that changes app/src. -->
 
-1. (write here)
-2. (write here)
-3. (write here)
+1. Keep the existing `canBook()` behavior unchanged and first add the required room catalog structure with at least four complete fictional rooms.
+2. Create `src/filter.ts` with a pure `filterRooms()` function for F1 capacity filtering and F2 equipment filtering, with tests before UI integration.
+3. Add `checkRoom()` to `src/booking.ts` so it finds the selected room and calls the existing `canBook()` with that room's own blocked status and bookings.
+4. Update `App.tsx` to use the catalog and filtering modules, add attendee/equipment controls, show the F4 empty state, and clear the previous result when the selected room changes for F5.
+5. Refactor remaining duplicated availability/data responsibilities, keep the full AC1-AC5 suite green, and create the before/after PlantUML diagrams.
 
 ### 3.3 One AI suggestion I rejected or modified
 
 | Suggestion (as the assistant made it) | Decision | Why — with the AC, F-rule, test or file behind it |
 | --- | --- | --- |
-| (write here) | Rejected / Modified | (write here) |
+| Refactor `canBook()` in `src/booking.ts` so it calls `filterRooms()` internally before checking time slots. | Rejected | `canBook()` must preserve the existing AC1-AC5 behavior and remain focused on booking availability. `filterRooms()` is required as a separate module for F1 and F2. Combining them would mix room filtering with time-slot validation and make both responsibilities harder to test independently. |
 
 ## 4. Feature extension (Task 2)
 
