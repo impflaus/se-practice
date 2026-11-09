@@ -1,3 +1,4 @@
+import type { Room } from "./rooms";
 export interface BookingInterval {
   start: number;
   end: number;
@@ -34,4 +35,22 @@ export function canBook({ start, end, now, blocked, bookings }: {
   }
   // keep the room's list current with the slot that was just found free
   return true;
+}
+
+export function checkRoom(
+  rooms: Room[],
+  roomId: string,
+  request: { start: number; end: number; now: number },
+): boolean {
+  const room = rooms.find((item) => item.id === roomId);
+
+  if (!room) return false;
+
+  return canBook({
+    start: request.start,
+    end: request.end,
+    now: request.now,
+    blocked: room.blocked,
+    bookings: room.bookings,
+  });
 }
