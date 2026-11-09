@@ -56,4 +56,12 @@ describe("filterRooms", () => {
 
     expect(result.map((room) => room.id)).toEqual(["A", "C"]);
   });
+  it("F4: returns an empty list when no rooms match", () => {
+  const result = filterRooms(rooms, {
+    attendees: 20,
+    equipment: ["Projector"],
+  });
+
+  expect(result).toEqual([]);
+});
 });
