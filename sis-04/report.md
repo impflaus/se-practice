@@ -212,7 +212,11 @@ Please:
 <!-- Short: the catalog (how many rooms, which equipment), how the filter is chosen on the page,
      what the empty state says, what happens to an old result when the room changes. -->
 
-(write here)
+I added a new room catalog in `src/rooms.ts` with four fictional rooms: A-204, B-105, C-301 and D-102. Each room has its own capacity, equipment list, blocked status and booking data. The available equipment includes Projector, Whiteboard, Computers and TV.
+
+I added attendee and equipment controls to the page. The UI calls `filterRooms()` so only rooms with enough capacity and all selected equipment are shown. When no rooms match, the page displays `No rooms match your requirements.`
+
+I also added `checkRoom()` in `src/booking.ts`. It finds the selected room and passes that room's blocked status and bookings to the existing `canBook()` function. When the selected room changes, the previous availability result and interval are cleared so an old result is not shown for a different room.
 
 ### 4.2 Demonstration
 
@@ -221,11 +225,11 @@ Please:
 
 | Screenshot | What it shows |
 | --- | --- |
-| `evidence/filter-match.png` | (write here) |
-| `evidence/filter-empty.png` | (write here) |
-| `evidence/switch-a.png` | (write here) |
-| `evidence/switch-b.png` | (write here) |
-| `evidence/narrow.png` | (write here) |
+| `evidence/filter-match.png` | Attendees = 1 with Projector and Whiteboard selected. Only A-204 matches because it contains both required equipment items and has enough capacity. |
+| `evidence/filter-empty.png` | Attendees = 20 with no required equipment. No room has enough capacity, so the page shows `No rooms match your requirements.` |
+| `evidence/switch-a.png` | A-204 is selected with current time 09:00 and requested interval 10:00–11:00. The result is Unavailable because A-204 already has a booking from 10:00–11:00. |
+| `evidence/switch-b.png` | B-105 is selected with the same 10:00–11:00 interval. The result is Available because B-105's own booking is 12:00–13:00. |
+| `evidence/narrow.png` | The application shown in a narrow mobile-sized viewport. The controls remain readable and the layout adapts without requiring a separate mobile page. |
 
 ## 5. Refactoring (Task 3)
 
@@ -235,10 +239,12 @@ Please:
 
 | Module or component | Responsibility |
 | --- | --- |
-| `src/rooms.ts` | (write here) |
-| `src/booking.ts` | (write here) |
-| `src/filter.ts` | (write here) |
-| (write here) | (write here) |
+| `src/rooms.ts` | Defines the Room type and stores the fictional room catalog used by the application. |
+| `src/booking.ts` | Contains the existing `canBook()` booking rules and `checkRoom()` for checking the selected room's own blocked status and bookings. |
+| `src/filter.ts` | Contains the pure `filterRooms()` function for capacity and equipment filtering. |
+| `src/App.tsx` | Holds UI state, displays filtering controls and delegates filtering and booking decisions to the domain modules. |
+| `src/components/RoomSchedule.tsx` | Displays the selected room, capacity, equipment, blocked status and booking times. |
+| `src/lib/availability.ts` | Contains presentation helpers for converting between minutes and HH:MM time labels. |
 
 ### 5.2 Design decisions
 
@@ -247,16 +253,18 @@ Please:
 
 | Decision | Alternative I did not take | Why |
 | --- | --- | --- |
-| (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) |
-
+| Keep `filterRooms()` separate from `canBook()` and `checkRoom()`. | Make `canBook()` call `filterRooms()` before checking a time slot. | F1 and F2 are room-selection rules, while AC1–AC5 are booking rules. Keeping them separate preserves the existing `canBook()` behavior and makes both modules independently testable. |
+| Keep blocked rooms visible in the filtered room list and reject them during availability checking. | Remove blocked rooms completely inside `filterRooms()`. | F3 only requires that a blocked room cannot be reported as available. Keeping the room visible makes its blocked state explicit in the UI while `checkRoom()` still guarantees that it returns unavailable. |
+| Clear the previous result whenever the selected room or filter criteria changes. | Keep the old result visible until the user presses Check again. | The old result could describe a different room, which would be misleading and would violate the intent of F5. |
 ### 5.3 Duplication removed
 
 <!-- One row per duplicated location that is gone. Count what you can point at, nothing else. -->
 
 | Before (file / function, what was repeated) | After (where it lives now) |
 | --- | --- |
-| (write here) | (write here) |
+| `src/App.tsx` used both `canBook()` and `checkAvailability()` to calculate availability, creating two booking-rule paths. | Booking decisions now go through `canBook()` and `checkRoom()` in `src/booking.ts`. |
+| `src/data/rooms.ts` contained the old room catalog and used a separate Room model. | The final room catalog and Room type are centralized in `src/rooms.ts`. |
+| `src/lib/availability.ts` duplicated overlap, duration, blocked-room and time-validation rules already handled by `canBook()`. | `src/lib/availability.ts` now only contains time-formatting helpers; booking rules remain in `src/booking.ts`. |
 
 ## 6. Automated tests (Task 4)
 
@@ -267,30 +275,36 @@ Please:
 
 | ID | Test title (as in the file) | Input → expected |
 | --- | --- | --- |
-| AC1 | (write here) | (write here) |
-| AC2 | (write here) | (write here) |
-| AC3 | (write here) | (write here) |
-| AC4 | (write here) | (write here) |
-| AC5 | (write here) | (write here) |
-| F1 | (write here) | (write here) |
-| F2 | (write here) | (write here) |
-| F3 | (write here) | (write here) |
-| F4 | (write here) | (write here) |
-| F5 | (write here) | (write here) |
-| B1 | (write here) | (write here) |
-| B2 | (write here) | (write here) |
-| B3 | (write here) | (write here) |
-| B4 | (write here) | (write here) |
-| B5 | (write here) | (write here) |
-| B6 | (write here) | (write here) |
-| INT | (write here) | (write here) |
+| AC1 | `AC1 T02: rejects request starting exactly at current time (540-570)` | start = 540, end = 570, now = 540 → false |
+| AC2 | `B1 AC2: accepts booking of exactly 120 minutes (720-840)` | 720–840 is exactly 120 minutes → true |
+| AC3 | `AC3 T13: rejects request on a blocked room (660-720)` | valid interval with blocked = true → false |
+| AC4 | `B4 AC4: rejects request overlapping end of existing booking (630-690)` | request overlaps existing 600–660 booking → false |
+| AC5 | `AC5: returns explicit boolean and leaves frozen input data untouched` | frozen booking list → boolean result and original data unchanged |
+| F1 | `F1 B5: includes a room when capacity exactly equals attendees` | attendees = 8, room capacity = 8 → room included |
+| F2 | `F2: room must contain ALL selected equipment` | Projector + Whiteboard required → only rooms containing both remain |
+| F3 | `F3: blocked room is never available` | blocked room C, valid free interval → false |
+| F4 | `F4: returns an empty list when no rooms match` | attendees = 20 → empty array |
+| F5 | `F5: uses the selected room's own bookings` | A overlaps 600–660 → false; B has different booking → true |
+| B1 | `B1 AC2: accepts booking of exactly 120 minutes (720-840)` | duration = 120 → true |
+| B2 | `B2 AC2: rejects booking exceeding 120 minutes (720-841)` | duration = 121 → false |
+| B3 | `B3 AC4: accepts request touching endpoint after existing booking (660-720)` | existing booking ends at 660, request starts at 660 → true |
+| B4 | `B4 AC4: rejects request overlapping end of existing booking (630-690)` | overlap with 600–660 → false |
+| B5 | `F1 B5: includes a room when capacity exactly equals attendees` | capacity = attendees = 8 → included |
+| B6 | `F1 B6: excludes a room one seat below requested attendees` | capacity = 8, attendees = 9 → excluded |
+| INT | `INT: filters matching rooms and checks the selected room's own bookings` | filter A/B, then check 600–660 → A false, B true |
 
 ### 6.2 Commands
 
 <!-- The commands exactly as you typed them, from app/. -->
 
 ```text
-(paste here)
+npx vitest run src/rooms.test.ts
+npx vitest run src/filter.test.ts
+npx vitest run src/checkRoom.test.ts
+npx vitest run src/integration.test.ts
+npx vitest run src/booking.test.ts
+npx vitest run
+npm run build
 ```
 
 ### 6.3 Final run
@@ -299,7 +313,18 @@ Please:
      tests equals what your test files hold (R2). -->
 
 ```text
-(paste here)
+ RUN  v2.1.9 /Users/daurenkaztay/Desktop/3year/SE /se-practice/sis-04/app
+
+ ✓ src/booking.test.ts (23)
+ ✓ src/checkRoom.test.ts (3)
+ ✓ src/filter.test.ts (4)
+ ✓ src/integration.test.ts (1)
+ ✓ src/rooms.test.ts (1)
+
+ Test Files  5 passed (5)
+      Tests  32 passed (32)
+   Start at  01:52:00
+   Duration  630ms (transform 225ms, setup 0ms, collect 301ms, tests 19ms, environment 1ms, prepare 608ms)
 ```
 
 ## 7. Quality evaluation (Task 5)

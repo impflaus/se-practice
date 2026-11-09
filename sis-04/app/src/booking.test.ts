@@ -21,7 +21,7 @@ describe('canBook Unit Tests', () => {
       expect(canBook({ ...fixture, start: -1, end: 60 })).toBe(false);
     });
 
-    it('T02: rejects request starting exactly at current time (540-570)', () => {
+    it('AC1 T02: rejects request starting exactly at current time (540-570)', () => {
       const fixture = createDefaultFixture();
       expect(canBook({ ...fixture, start: 540, end: 570 })).toBe(false);
     });
@@ -79,7 +79,7 @@ describe('canBook Unit Tests', () => {
 
   // AC3: Reject request when room is blocked
   describe('AC3 - Blocked Room Status', () => {
-    it('T13: rejects request on a blocked room (660-720)', () => {
+    it('AC3 T13: rejects request on a blocked room (660-720)', () => {
       const fixture = createDefaultFixture();
       expect(canBook({ ...fixture, start: 660, end: 720, blocked: true })).toBe(false);
     });
