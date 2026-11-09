@@ -66,12 +66,12 @@ describe('canBook Unit Tests', () => {
       expect(canBook({ ...fixture, start: 720, end: 839 })).toBe(true);
     });
 
-    it('T06: accepts booking of exactly 120 minutes (720-840)', () => {
+    it('B1 AC2: accepts booking of exactly 120 minutes (720-840)', () => {
       const fixture = createDefaultFixture();
       expect(canBook({ ...fixture, start: 720, end: 840 })).toBe(true);
     });
 
-    it('T07: rejects booking exceeding 120 minutes (720-841)', () => {
+    it('B2 AC2: rejects booking exceeding 120 minutes (720-841)', () => {
       const fixture = createDefaultFixture();
       expect(canBook({ ...fixture, start: 720, end: 841 })).toBe(false);
     });
@@ -87,7 +87,7 @@ describe('canBook Unit Tests', () => {
 
   // AC4: Overlap rule (touching endpoints permitted)
   describe('AC4 - Booking Overlaps & Boundaries', () => {
-    it('T01: accepts request touching endpoint after existing booking (660-720)', () => {
+    it('B3 AC4: accepts request touching endpoint after existing booking (660-720)', () => {
       const fixture = createDefaultFixture();
       expect(canBook({ ...fixture, start: 660, end: 720 })).toBe(true);
     });
@@ -97,7 +97,7 @@ describe('canBook Unit Tests', () => {
       expect(canBook({ ...fixture, start: 570, end: 600 })).toBe(true);
     });
 
-    it('T09: rejects request overlapping end of existing booking (630-690)', () => {
+    it('B4 AC4: rejects request overlapping end of existing booking (630-690)', () => {
       const fixture = createDefaultFixture();
       expect(canBook({ ...fixture, start: 630, end: 690 })).toBe(false);
     });
