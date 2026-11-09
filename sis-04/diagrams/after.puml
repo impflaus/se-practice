@@ -1,5 +1,61 @@
-' diagrams/after.puml — the same view of your FINAL code. It must show rooms, booking, filter
-' and the UI (App and any components), with an arrow for each import. Replace this stub.
-'
 @startuml
+title SIS #04 - After Refactoring
+
+package "UI" {
+  [App.tsx]
+  [TimeInput.tsx]
+  [ResultPanel.tsx]
+  [RoomSchedule.tsx]
+}
+
+package "Domain Data" {
+  [rooms.ts]
+}
+
+package "Filtering" {
+  [filter.ts]
+}
+
+package "Booking Logic" {
+  [booking.ts]
+}
+
+package "Presentation Helpers" {
+  [lib/availability.ts]
+  [types.ts]
+}
+
+[App.tsx] --> [rooms.ts] : ROOMS
+[App.tsx] --> [filter.ts] : filterRooms()
+[App.tsx] --> [booking.ts] : checkRoom()
+
+[booking.ts] --> [rooms.ts] : Room type
+[filter.ts] --> [rooms.ts] : Room type
+
+[App.tsx] --> [TimeInput.tsx]
+[App.tsx] --> [ResultPanel.tsx]
+[App.tsx] --> [RoomSchedule.tsx]
+
+[App.tsx] --> [lib/availability.ts] : time conversion
+[App.tsx] --> [types.ts] : CheckResult
+
+[RoomSchedule.tsx] --> [rooms.ts]
+[RoomSchedule.tsx] --> [lib/availability.ts]
+
+[ResultPanel.tsx] --> [types.ts]
+[ResultPanel.tsx] --> [lib/availability.ts]
+
+note right of [filter.ts]
+Pure room filtering:
+F1 capacity
+F2 equipment
+end note
+
+note right of [booking.ts]
+Single booking-rule path:
+canBook()
+checkRoom()
+F3 and F5
+end note
+
 @enduml

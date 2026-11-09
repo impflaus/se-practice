@@ -1,12 +1,42 @@
-' diagrams/before.puml — the modules and components of your STARTING POINT and what depends on what.
-' Replace this stub. A component diagram is enough, for example:
-'
-'   @startuml
-'   component "App.tsx" as App
-'   component "booking.ts" as Booking
-'   App --> Booking : canBook()
-'   note right of App : rooms, times and the result all live here
-'   @enduml
-'
 @startuml
+title SIS #04 - Before Refactoring
+
+package "UI" {
+  [App.tsx]
+  [TimeInput.tsx]
+  [ResultPanel.tsx]
+  [RoomSchedule.tsx]
+}
+
+package "Data" {
+  [data/rooms.ts]
+  [types.ts]
+}
+
+package "Booking Logic" {
+  [booking.ts]
+  [lib/availability.ts]
+}
+
+[App.tsx] --> [data/rooms.ts] : SAMPLE_ROOMS
+[App.tsx] --> [booking.ts] : canBook()
+[App.tsx] --> [lib/availability.ts] : checkAvailability()
+[App.tsx] --> [types.ts]
+
+[App.tsx] --> [TimeInput.tsx]
+[App.tsx] --> [ResultPanel.tsx]
+[App.tsx] --> [RoomSchedule.tsx]
+
+[RoomSchedule.tsx] --> [types.ts]
+[RoomSchedule.tsx] --> [lib/availability.ts]
+[ResultPanel.tsx] --> [types.ts]
+[ResultPanel.tsx] --> [lib/availability.ts]
+
+note right of [App.tsx]
+Booking result was calculated
+through both canBook()
+and checkAvailability().
+Filtering logic did not exist yet.
+end note
+
 @enduml
