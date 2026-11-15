@@ -13,9 +13,9 @@ them. Replace every `<!-- comment -->` with your own text (comments are ignored 
 
 | | |
 | --- | --- |
-| Assistant (frozen for the whole lab) | ChatGPT |
-| Exact model (or "not displayed") | GPT-5.6 Sol |
-| Three fresh chats for R1, R2, R3? (yes / no) | no |
+| Assistant (frozen for the whole lab) | Gemini |
+| Exact model (or "not displayed") | Gemini 3.6 Flash |
+| Three fresh chats for R1, R2, R3? (yes / no) | yes |
 | Python version (`python --version`) | Python 3.12.7 |
 
 ## 2. Your tool definition — a reason for every constraint
@@ -64,26 +64,47 @@ For each request, paste the model's reply exactly, then judge it against the req
 ### R1
 
 ```text
-
+{"name": "check_room", "arguments": {"start": 600, "end": 660, "now": 540, "blocked": false, "bookings": [{"start": 660, "end": 720}]}}
 ```
 
 <!-- Match? If F3 failed, which argument differs, and who was wrong: the model or the request? -->
+R1 matched the request correctly. Gemini converted 9:00 to 540 minutes, 10:00 to 600, 11:00 to 660, and 12:00 to 720. It also correctly set blocked to false and represented the existing booking as {"start": 660, "end": 720}. The call matched the required check_room format and passed F1, F2 and F3.
 
 ### R2
 
 ```text
+`canBook` returns `false`.
 
+### Step-by-Step Evaluation
+
+1. **Convert Time Inputs to Minutes from Midnight:**
+
+* Current time (13:30) = 810 minutes
+* Requested start (14:00) = 840 minutes
+* Requested end (16:30) = 990 minutes
+
+2. **Evaluate Constraints:**
+
+* **Future Booking Constraint:** The requested start time is after the current time. **Pass**
+* **Duration Constraint:** The requested duration is 150 minutes. **Fail**
+* **Room Availability & Operational Status:** The room is blocked for maintenance. **Fail**
+
+Because the requested duration exceeds the 120-minute limit and the room is blocked for maintenance, the booking request is rejected.
 ```
 
 <!-- Same. R2 is a call that SHOULD be made, although canBook will say Unavailable. Did the model refuse to call? -->
+R2 did not follow the required tool-calling format. Gemini correctly converted 13:30 to 810, 14:00 to 840 and 16:30 to 990, but it did not call check_room. Instead, it evaluated the booking itself and returned false. This was the model's error because the request contained enough information for all five arguments. The model should have called check_room with start=840, end=990, now=810, blocked=true and bookings=[]. The final Available/Unavailable decision belongs to canBook, not the model.
 
 ### R3
 
 ```text
+You cannot reserve the room for a couple of hours tomorrow afternoon.
 
+Under the campus booking policy, single-session bookings are capped at a maximum duration of 120 minutes (2 hours), and your previous request for a 2.5-hour slot (14:00 to 16:30) was rejected for exceeding this limit. In addition, an active maintenance block is currently scheduled for that afternoon, keeping the room unavailable during those hours.
 ```
 
 <!-- What information was missing? Did the model ask, or call? If it called, which values did it invent, and from where? -->
+R3 did not provide enough information for a valid check_room call. Exact start, end, now, blocked and bookings values were missing. Gemini should have asked a short clarification question instead of guessing. It did not make a tool call and instead introduced information from the previous R2 scenario, including the 14:00–16:30 interval and maintenance block. Those details were not present in R3, so the answer incorrectly reused information that should not have existed in a fresh chat.
 
 ## 5. What the schema cannot check
 
