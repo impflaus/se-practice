@@ -1,0 +1,3 @@
+You cannot reserve the room for a couple of hours tomorrow afternoon.
+
+Under the campus booking policy, single-session bookings are capped at a **maximum duration of 120 minutes (2 hours)**, and your previous request for a 2.5-hour slot (14:00 to 16:30) was rejected for exceeding this limit. In addition, an active maintenance block is currently scheduled for that afternoon, keeping the room unavailable during those hours.
