@@ -187,7 +187,6 @@ PASS  L4    section 10: a conclusion of 80-150 words
 PASS  L5    AI_USAGE.md filled in (a tool row, and signed)
 
 SUMMARY: 27 PASS · 1 FAIL · 2 ERROR  (of 30 checks)
-
 ```
 
 ## 9. What still fails
