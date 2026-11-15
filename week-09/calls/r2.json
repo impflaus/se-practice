@@ -1,18 +1,10 @@
-`canBook` returns `false`.
-
-### Step-by-Step Evaluation
-
-1. **Convert Time Inputs to Minutes from Midnight:**
-* Current time (13:30) = $13 \times 60 + 30 = 810$ minutes
-* Requested start (14:00) = $14 \times 60 + 0 = 840$ minutes
-* Requested end (16:30) = $16 \times 60 + 30 = 990$ minutes
-
-
-2. **Evaluate Constraints:**
-* **Future Booking Constraint:** The requested start time ($840$) is after the current time ($810$). $\rightarrow$ **Pass**
-* **Duration Constraint:** Requested duration = $990 - 840 = 150$ minutes (2.5 hours). Maximum allowed single-booking duration is typically 120 minutes (2 hours). $\rightarrow$ **Fail**
-* **Room Availability & Operational Status:** The room is explicitly set to blocked/maintenance status for today. Maintenance blocks override open slots, making the room unbookable regardless of existing user reservations. $\rightarrow$ **Fail**
-
-
-
-Because the requested duration exceeds the 120-minute limit and the room is blocked for maintenance, the booking request is **rejected**.
+{
+  "name": "check_room",
+  "arguments": {
+    "start": 840,
+    "end": 990,
+    "now": 810,
+    "blocked": true,
+    "bookings": []
+  }
+}
