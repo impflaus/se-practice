@@ -110,38 +110,95 @@ R3 did not provide enough information for a valid check_room call. Exact start, 
 
 <!-- Name the acceptance criteria (AC1-AC6, README section 3) that a JSON Schema with the allowed keywords cannot
      enforce, and say why for each. At least two, by their AC number. Which part of AC1 CAN the schema enforce? -->
+The JSON Schema can check part of AC1: it can enforce that `start`, `end` and `now` are integers between 0 and 1440. However, with the allowed schema keywords it cannot compare the values of different fields.
+
+AC1 can only be fully enforced by `canBook` because the function must check that `start < end` and that `start > now`. The schema can validate each number separately, but it cannot compare `start`, `end` and `now`.
+
+AC2 can only be enforced by `canBook` because the function must calculate the booking duration and verify that `end - start <= 120`. The schema cannot calculate the difference between two fields.
+
+AC3 can only be enforced by `canBook`. The schema can require `blocked` to be a boolean, but it cannot decide that a booking must be unavailable when `blocked` is `true`.
+
+AC4 can only be enforced by `canBook` because checking overlap requires comparing the requested interval with every existing booking. The schema can validate the structure of `bookings`, but it cannot perform interval-overlap logic.
+
+AC5 is enforced by the implementation and tool behavior, not by the input schema. The schema only validates input and cannot guarantee that the function does not modify or save data.
+
+AC6 belongs to the user interface feedback, so it cannot be enforced by this tool input schema.
 
 ## 6. Permissions — allow, ask or block
 
 | # | Action | Decision (allow / ask / block) | Reason (the risk, in one sentence or more) |
 | --- | --- | --- | --- |
-| A1 | call `check_room` with the times the user just typed | | |
-| A2 | read `week-08/app/src/booking.ts` | | |
-| A3 | edit `booking.ts` to raise the 120-minute limit to 180 | | |
-| A4 | run `npm test` in `week-08/app` | | |
-| A5 | run `git reset --hard` to undo its own last three edits | | |
-| A6 | `git commit` its change on the `week-09` branch | | |
-| A7 | `git push` to `main` | | |
-| A8 | send the contents of `.env` to an MCP server it found online | | |
+| A1 | call `check_room` with the times the user just typed | allow | This is a low-risk read-only availability check. The tool does not create or save a booking, so calling it with user-provided values does not modify repository or user data. |
+| A2 | read `week-08/app/src/booking.ts` | allow | Reading source code is non-destructive and is needed to understand how `canBook` works. The main risk is exposure of source content, but this file is part of the local repository and contains implementation logic rather than credentials. |
+| A3 | edit `booking.ts` to raise the 120-minute limit to 180 | ask | This changes AC2 and the behavior of the application. A user request for a three-hour booking is not enough authority to modify an acceptance criterion, so explicit approval is required before changing the rule. |
+| A4 | run `npm test` in `week-08/app` | allow | Running the test suite is normally non-destructive and is useful for verification. The risk is limited to local compute time and possible generated test artifacts. |
+| A5 | run `git reset --hard` to undo its own last three edits | ask | `git reset --hard` can permanently discard uncommitted work and move the branch history. It should require approval because the lost changes may not be recoverable easily. |
+| A6 | `git commit` its change on the `week-09` branch | ask | A commit creates a permanent repository checkpoint and records the agent's changes in project history. I should review the diff and commit message before allowing it. |
+| A7 | `git push` to `main` | block | Pushing directly to `main` bypasses review and can affect the shared remote branch. The assignment also requires work on `week-09` and an open PR instead of directly changing `main`. |
+| A8 | send the contents of `.env` to an MCP server it found online | block | `.env` may contain passwords, API keys or other secrets. Sending those contents to an unknown external server would create a serious credential-exposure and data-leak risk. |
 
 ## 7. Checkpoint
 
 <!-- The commit you would make before letting such an agent edit anything: its real SHA (git log --oneline),
      the exact command that returns you to it, and what that command would throw away. -->
+Before allowing an agent to edit the repository, I would use commit `b3c422f` as the checkpoint.
+To return the repository to this checkpoint, I would run:
+
+```bash
+git reset --hard b3c422f
 
 ## 8. Checker output
 
 Paste the **whole** output of your last `python tests/check_tool.py`, unedited.
 
 ```text
+PASS  D1    tool/check_room.json exists and is valid JSON
+PASS  D2    has name, description and inputSchema
+PASS  D3    name is exactly "check_room"
+PASS  D4    description: 25+ words, says minutes, 1440, and that it does not save
+PASS  D5    inputSchema: an object with exactly the five fields, all required
+PASS  D6    inputSchema uses only the keywords listed in README section 5
+PASS  S01   the R1 call, valid -> accept
+PASS  S02   no existing bookings: bookings = [] -> accept
+PASS  S03   end as a string: "11:00" -> refuse
+PASS  S04   now missing -> refuse
+PASS  S05   an extra field: "room": "204" -> refuse
+PASS  S06   start below the day: -30 -> refuse
+PASS  S07   end beyond the day: 1500 -> refuse
+PASS  S08   a booking with no end: {start: 660} -> refuse
+PASS  S09   blocked as a string: "false" -> refuse
+PASS  S10   start not a whole minute: 600.5 -> refuse
+PASS  S11   end at the end of the day: 1440 -> accept
+PASS  S12   a booking as a pair: [660, 720] -> refuse
+PASS  F1    calls/r1.json: a call to check_room
+PASS  F2    calls/r1.json: arguments valid against your schema
+PASS  F3    calls/r1.json: arguments equal the expected ones (README section 5, Part 2)
+FAIL  F4    calls/r2.json: a call to check_room
+             -> Expecting value: line 1 column 1 (char 0)
+ERROR F5    calls/r2.json: arguments valid against your schema
+             -> no readable call
+ERROR F6    calls/r2.json: arguments equal the expected ones (README section 5, Part 2)
+             -> no readable call
+PASS  F7    calls/r3: exactly one of r3.json (it called) or r3.txt (it asked), not empty
+PASS  L1    section 5 names at least two acceptance criteria (AC1-AC6) the schema cannot check
+PASS  L2    section 6: A1-A8 each have allow / ask / block and a reason of 5+ words
+PASS  L3    section 7 names the checkpoint commit (a SHA)
+PASS  L4    section 10: a conclusion of 80-150 words
+PASS  L5    AI_USAGE.md filled in (a tool row, and signed)
+
+SUMMARY: 27 PASS · 1 FAIL · 2 ERROR  (of 30 checks)
 
 ```
 
 ## 9. What still fails
 
 <!-- Every check in submission.yml known_fails, with the reason. "None" if all 30 pass. -->
+F4, F5 and F6 still fail because Gemini did not produce a `check_room` tool call for R2. Instead, it evaluated the booking itself and returned a natural-language explanation. I kept `calls/r2.json` exactly as the model returned it, as required by the assignment, rather than editing the response to make the checker pass.
 
 ## 10. Conclusion (80–150 words)
 
 <!-- What did you learn about the line between the schema, the model and the function? Be specific:
      name a case, a request or an action. "Tool definitions are important" is worth nothing. -->
+This practice showed me that the schema, the model and the actual function have different responsibilities. The schema was useful for checking the structure of a call, for example rejecting S03 because `end` was a string and S05 because it contained an extra field. However, the schema cannot enforce business rules such as `start < end`, the 120-minute duration limit or booking overlap. Those rules belong to `canBook`.
+
+The model can also fail even when the schema is correct. In R2, Gemini had all required information but evaluated the booking itself instead of calling `check_room`. In R3, it reused details that were not present in the request instead of asking for missing information. This showed me why agent permissions and human review are necessary even when a tool definition is strict.
