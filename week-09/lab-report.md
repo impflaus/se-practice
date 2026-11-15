@@ -28,9 +28,14 @@ Paste your final `tool/check_room.json`, then fill the table: one row per constr
 
 | Field | Constraint (e.g. `"type": "integer"`, `"maximum": 1440`) | What goes wrong without it |
 | --- | --- | --- |
-| | | |
-| | | |
-| | | |
+| `start` | `"type": "integer"`, `"minimum": 0`, `"maximum": 1440` | A model could send strings, fractions, negative values, or times outside the day. |
+| `end` | `"type": "integer"`, `"minimum": 0`, `"maximum": 1440` | Invalid end times such as `"11:00"` or 1500 could reach the function. |
+| `now` | `"type": "integer"`, `"minimum": 0`, `"maximum": 1440` | The current time could be missing or outside the expected minute range. |
+| `blocked` | `"type": "boolean"` | A string such as `"false"` could be accepted even though it is not a real boolean. |
+| `bookings` | `"type": "array"` with object items | The model could send a wrong structure such as `[660, 720]`. |
+| booking item | `start` and `end` are required integers from 0 to 1440 | Incomplete booking objects such as `{start: 660}` could be accepted. |
+| root object | all five fields are required | Calls missing fields such as `now` would pass schema validation. |
+| root object | `"additionalProperties": false` | Extra fields such as `"room": "204"` would be silently accepted. |
 
 ## 3. The twelve calls — first run and final run
 
@@ -39,18 +44,18 @@ say what you changed.
 
 | Case | First run | Final run | What you changed |
 | --- | --- | --- | --- |
-| S01 | PASS | | |
-| S02 | PASS | | |
-| S03 | FAIL | | |
-| S04 | FAIL | | |
-| S05 | FAIL | | |
-| S06 | FAIL | | |
-| S07 | FAIL | | |
-| S08 | FAIL | | |
-| S09 | FAIL | | |
-| S10 | FAIL | | |
-| S11 | PASS | | |
-| S12 | FAIL | | |
+| S01 | PASS | PASS | No change; this was already a valid call. |
+| S02 | PASS | PASS | No change; an empty bookings list is valid. |
+| S03 | FAIL | PASS | Set `end` to type `integer`, so a string such as `"11:00"` is refused. |
+| S04 | FAIL | PASS | Added all five fields to `required`, so a missing `now` is refused. |
+| S05 | FAIL | PASS | Added `additionalProperties: false` to the root object, so an extra `room` field is refused. |
+| S06 | FAIL | PASS | Added `minimum: 0` to minute fields, so negative start values are refused. |
+| S07 | FAIL | PASS | Added `maximum: 1440` to minute fields, so values beyond the day are refused. |
+| S08 | FAIL | PASS | Required both `start` and `end` inside every booking object. |
+| S09 | FAIL | PASS | Set `blocked` to type `boolean`, so the string `"false"` is refused. |
+| S10 | FAIL | PASS | Set minute fields to type `integer`, so fractional minutes such as 600.5 are refused. |
+| S11 | PASS | PASS | No change; 1440 is a valid end-of-day value. |
+| S12 | FAIL | PASS | Defined each booking as an object with `start` and `end`, so an array pair is refused. |
 
 ## 4. Function calling — what the model wrote
 
