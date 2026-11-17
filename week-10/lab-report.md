@@ -11,15 +11,17 @@ grader find your answers by them. You can add rows to any table, but never remov
 
 ## 1. Setup
 
+## 1. Setup
+
 | | |
 | --- | --- |
-| Assistant I reviewed with (tool) | |
-| Exact model (with its version, or `not displayed`) | |
-| Where the assistant read the project (Bolt.new / Claude Code / Cursor / Copilot / chat with pasted files) | |
-| Starting point (`week-08` or `week-07`) | |
-| Baseline commit — the checkpoint of Part 0 | |
-| Where I ran the tests (Bolt terminal / my computer / Codespace) | |
-| Vitest version (the `RUN  v…` line of a run) | |
+| Assistant I reviewed with (tool) | Gemini |
+| Exact model (with its version, or `not displayed`) | Gemini 3.6 Flash |
+| Where the assistant read the project (Bolt.new / Claude Code / Cursor / Copilot / chat with pasted files) | chat with pasted files |
+| Starting point (`week-08` or `week-07`) | week-08 |
+| Baseline commit — the checkpoint of Part 0 | 654d43c |
+| Where I ran the tests (Bolt terminal / my computer / Codespace) | my computer |
+| Vitest version (the `RUN  v…` line of a run) | 2.1.9 |
 
 ---
 
@@ -32,18 +34,58 @@ script, or such a tool in `package.json`?). **Result:** `pass`, `fail`, `missing
 
 | Command | Exists | Result | Note |
 | --- | --- | --- | --- |
-| `npx vitest run` | | | |
-| `npm test` | | | |
-| `npm run test:unit` (the test command in `AGENTS.md`) | | | |
-| `npm run build` | | | |
-| `npm run lint` | | | |
+| `npx vitest run` | yes | pass | Baseline suite passed: 23 tests in `src/booking.test.ts`. |
+| `npm test` | yes | pass | `test` script runs `vitest run`; 23/23 tests passed. |
+| `npm run test:unit` (the test command in `AGENTS.md`) | no | missing | `package.json` has no `test:unit` script. |
+| `npm run build` | yes | pass | Vite production build completed successfully. |
+| `npm run lint` | yes | fail | ESLint reported 3 unused-variable errors in `src/App.tsx` and `src/booking.ts`. |
 
 ### 2.2 The baseline test run
 
 The **real** output of `npx vitest run` in `week-10/app/`, before any change:
 
 ```text
-(paste here)
+ RUN  v2.1.9 /Users/daurenkaztay/Desktop/3year/SE /se-practice/week-10/app
+
+       ✓ X1: accepts interval up to exact upper boundary of 1440 (1320-1440)
+       ✓ accepts exact 1-minute slot ending at 1440 limit (1439-1440)
+       ✓ X2: rejects start == now even when bookings list is empty (540-660)
+ ✓ src/booking.test.ts (23)
+   ✓ canBook Unit Tests (21)
+     ✓ AC1 - Valid Time Interval & Bounds (8)
+       ✓ rejects negative start time (start < 0)
+       ✓ T02: rejects request starting exactly at current time (540-570)
+       ✓ T03: rejects zero-duration interval (720-720)
+       ✓ T04: rejects inverted interval where start > end (750-720)
+       ✓ T05: rejects interval exceeding 1440 limit (1380-1441)
+       ✓ X1: accepts interval up to exact upper boundary of 1440 (1320-1440)
+       ✓ accepts exact 1-minute slot ending at 1440 limit (1439-1440)
+       ✓ X2: rejects start == now even when bookings list is empty (540-660)
+     ✓ AC2 - Maximum Duration Limit (3)
+       ✓ accepts booking of 119 minutes (720-839)
+       ✓ T06: accepts booking of exactly 120 minutes (720-840)
+       ✓ T07: rejects booking exceeding 120 minutes (720-841)
+     ✓ AC3 - Blocked Room Status (1)
+       ✓ T13: rejects request on a blocked room (660-720)
+     ✓ AC4 - Booking Overlaps & Boundaries (8)
+       ✓ T01: accepts request touching endpoint after existing booking (660-720)
+       ✓ T08: accepts request touching endpoint before existing booking (570-600)
+       ✓ T09: rejects request overlapping end of existing booking (630-690)
+       ✓ T10: rejects request completely encapsulating existing booking (570-690)
+       ✓ T11: rejects request inside existing booking (615-645)
+       ✓ T12: rejects request matching existing booking bounds exactly (600-660)
+       ✓ T14: accepts request when no existing bookings exist (630-690)
+       ✓ accepts valid request fitting between two non-adjacent existing bookings
+     ✓ AC5 - Pure Function Decision & Immutability (1)
+       ✓ AC5: returns explicit boolean and leaves frozen input data untouched
+   ✓ Week 08 regression tests (2)
+     ✓ BUG-A: accepts request touching bookings on both sides
+     ✓ BUG-B: available request does not mutate bookings
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  18:55:59
+   Duration  719ms (transform 83ms, setup 0ms, collect 69ms, tests 5ms, environment 1ms, prepare 138ms)
 ```
 
 ### 2.3 The agent reads the playbook
@@ -51,18 +93,61 @@ The **real** output of `npx vitest run` in `week-10/app/`, before any change:
 What you sent, exactly (the Practice #09 prompt):
 
 ```text
-(paste here)
+Read the root AGENTS.md before making changes. Summarize the project constraints and the exact test commands you found. Do not edit anything yet. If you cannot read AGENTS.md, tell me, and I will paste its content. Do not claim that AGENTS.md was automatically loaded.
 ```
 
 The assistant's answer, pasted unedited:
 
 ```text
-(paste here)
+Based on the provided `AGENTS.md` file, here is the summary of the project constraints and exact commands:
+
+### Project Constraints
+
+* **Core Functionality & Rules:**
+* **AC1:** Reject start time $\ge$ end time and any requests in the past.
+* **AC2:** Enforce a maximum allowed booking duration of **120 minutes**.
+* **AC3:** Reject requests for blocked rooms.
+* **AC4:** Reject overlapping times. Requests touching an existing booking at an endpoint also count as an overlap.
+* **AC5:** Return `Available` / `Unavailable` state **without mutating** existing booking data.
+
+
+* **Domain Realism:** Use real room names and the real timetable from the KBTU portal.
+* **Scope & Permissions:**
+* Allowed to edit any file in the project.
+* Allowed to add NPM packages as required.
+* If persistence is needed, add a small Supabase table and login page.
+
+
+* **Completion Workflow:** Ensure the page loads, the build passes, and publish a preview using Netlify.
+
+---
+
+### Exact Test Commands
+
+* **Unit Tests:** `npm run test:unit`
+
+---
+
+### Other Project Commands Found
+
+* **Install Dependencies:** `npm install`
+* **Run Dev Server:** `npm run dev`
+* **Build Project:** `npm run build`
+* **Deploy Preview:** `npx netlify deploy --prod`
 ```
 
 Which rules in its summary are wrong for this project, and how you know:
 
 <!-- Write below this line -->
+Several rules in the summary are wrong for this project because they repeat the intentionally incorrect parts of `AGENTS.md`.
+
+1. The instruction to use real room names and the real KBTU timetable is wrong. The Week 10 scope requires one fictional room and fictional data, with no real personal information.
+2. AC4 is summarized incorrectly. The playbook says that touching an existing booking at an endpoint counts as an overlap, but the real acceptance contract says touching endpoints must be allowed.
+3. AC6 is missing completely. The real contract also requires clear UI feedback on desktop and mobile.
+4. The listed test command `npm run test:unit` is wrong for the current project because `package.json` has no `test:unit` script. I verified this by running it and receiving `Missing script: "test:unit"`.
+5. The instruction that an agent may add a Supabase table and a login page conflicts with the project scope, which explicitly requires no login and no database.
+6. The Netlify production deployment command conflicts with the Week 10 constraint that no external deployments are allowed.
+7. The statement that packages may be added whenever needed is too broad for this lab. The later refactor task explicitly says not to add new dependencies.
 
 ---
 
@@ -73,17 +158,136 @@ Which rules in its summary are wrong for this project, and how you know:
 Where it ran, and how you made sure it could not edit:
 
 <!-- Write below this line -->
+The review ran in a fresh Gemini 3.6 Flash chat with the relevant project files uploaded to the chat. Gemini had no terminal or repository write access, so it could only inspect the supplied files. I did not ask it to make changes.
 
 What you sent, exactly (the deck's prompt):
 
 ```text
-(paste here)
+Act as a cautious software reviewer. Inspect this Smart Campus Room Availability Checker WITHOUT editing files. Identify risks in correctness, security, privacy, reliability, maintainability, and agent operations. For each risk, cite the exact file/function or missing check, explain the impact, suggest a way to verify it, and state uncertainty. Do not invent test results.
 ```
 
 The assistant's answer, pasted unedited:
 
 ```text
-(paste here)
+Here is a security, correctness, reliability, maintainability, and agent-operations review based on inspection of the codebase without modifying files.
+
+---
+
+### 1. Correctness Risks
+
+#### Risk C-1: Divergence between `canBook` (decision logic) and `checkAvailability` (explanation generator)
+
+* **Location:** `src/App.tsx` (`handleCheck`, lines 48–60) / `src/booking.ts` (`canBook`) / `src/lib/availability.ts` (`checkAvailability`)
+
+
+* **Exact File/Function:** `App.tsx` lines 50–59.
+
+
+* **Impact:** `App.tsx` calls `canBook` to determine the boolean decision (`"available"` or `"unavailable"`), but calls `checkAvailability` to obtain `reasons`. If `canBook` evaluates a request as unavailable while `checkAvailability` returns an empty `reasons` array (or vice versa), the UI displays `"unavailable"` without any user feedback explaining why, leading to silent UI state mismatch.
+
+
+* **Verification:** Run a test case where `canBook` and `checkAvailability` disagree (e.g., passing `end = 1440` and `start = 1380`; `canBook` checks `end <= 1440`, whereas `checkAvailability` checks `end > 1440`).
+
+
+* **Uncertainty:** Low. `checkAvailability` contains logic independent of `canBook`.
+
+
+
+#### Risk C-2: Domain non-compliance with AGENTS.md mandate (Real KBTU Timetable vs Fictional Sample Data)
+
+* **Location:** `AGENTS.md` (lines 11–12) vs `src/data/rooms.ts` (lines 3–41)
+
+
+* **Exact File/Function:** `src/data/rooms.ts` (`SAMPLE_ROOMS`).
+
+
+* **Impact:** `AGENTS.md` explicitly specifies: *"For realism, use real room names and the real timetable from the KBTU portal."* However, `src/data/rooms.ts` relies on placeholder fictional data ("Aurora Hall", "Beacon 204") with generic 1-day schedules.
+
+
+* **Verification:** Check `src/data/rooms.ts` against actual KBTU portal room names (e.g., 461, 444, Valikhanov Hall, Independence Hall) and timetables.
+* **Uncertainty:** Low. `rooms.ts` contains an explicit comment: *"Fictional sample data only"*.
+
+
+
+---
+
+### 2. Reliability & Edge-Case Risks
+
+#### Risk R-1: Broken npm script execution for unit tests (`npm run test:unit`)
+
+* **Location:** `package.json` (`scripts`, line 9) vs `AGENTS.md` (`Commands`, line 21)
+
+
+* **Exact File/Function:** `package.json` line 9.
+
+
+* **Impact:** `AGENTS.md` specifies `npm run test:unit` as the official test command. However, `package.json` maps `"test": "vitest run"` and has no `"test:unit"` script defined. Running `npm run test:unit` will fail with `npm ERR! missing script: test:unit`.
+
+
+* **Verification:** Execute `npm run test:unit` in the terminal environment.
+* **Uncertainty:** Zero. The script key `"test:unit"` is missing in `package.json`.
+
+
+
+#### Risk R-2: Lack of explicit upper-bound check on `start` in `canBook`
+
+* **Location:** `src/booking.ts` (`canBook`, line 23)
+
+
+* **Exact File/Function:** `canBook` line 23: `if (!(0 <= start && start < end && end <= 1440)) return false;`
+
+
+* **Impact:** If `start = 1440` and `end = 1441`, the check fails at `end <= 1440`. However, for an interval like `start = 1440` and `end = 1440`, `start < end` fails first. While mathematically covered by `start < end && end <= 1440`, `start` itself is not explicitly constrained to `start < 1440`, which could cause unexpected edge case handling if bounds are extended.
+
+
+* **Verification:** Run Vitest with input `{ start: 1440, end: 1441, now: 540, blocked: false, bookings: [] }`.
+
+
+* **Uncertainty:** Low (currently safe due to `start < end` and `end <= 1440` conjunction).
+
+
+
+---
+
+### 3. Agent Operations & Maintainability Risks
+
+#### Risk A-1: Unchecked deployment step (`npx netlify deploy --prod`) without environment authentication
+
+* **Location:** `AGENTS.md` (`Before you finish`, line 32)
+
+
+* **Exact File/Function:** `AGENTS.md` line 32.
+
+
+* **Impact:** Non-interactive CI/CD or automated agent runs executing `npx netlify deploy --prod` will hang or fail if Netlify CLI tokens or authentication context are not configured in the runner environment.
+* **Verification:** Execute `npx netlify deploy --prod` in a non-interactive shell without `NETLIFY_AUTH_SITE` or `NETLIFY_AUTH_TOKEN`.
+* **Uncertainty:** Medium (depends on environment secrets configuration).
+
+#### Risk A-2: Missing type checking in pre-build script workflow
+
+* **Location:** `package.json` (`scripts`, lines 6–9)
+
+
+* **Exact File/Function:** `package.json` script `"build"` (`vite build`).
+
+
+* **Impact:** `vite build` does not perform TypeScript type checking by default (`tsc` is separated into `npm run typecheck`). An agent might pass `npm run build` even when type errors exist in modified files.
+
+
+* **Verification:** Introduce a intentional TypeScript type error in `App.tsx` and execute `npm run build`.
+* **Uncertainty:** Zero. Vite's default build ignores type checking unless `tsc` is explicitly chained.
+
+---
+
+### Summary Checklist of Missing Checks / Fixes Needed
+
+1. **`package.json`**: Add `"test:unit": "vitest run"` script entry.
+
+
+2. **`App.tsx` / `availability.ts**`: Align availability check decision source to rely directly on `canBook`.
+
+
+3. **`data/rooms.ts`**: Populate actual KBTU campus rooms and portal timetable schedules.
 ```
 
 ### 3.2 Challenging the AI's claims
@@ -94,11 +298,12 @@ inspected** is what you opened or ran yourself. **Label:** `confirmed`, `plausib
 
 | # | The AI's claim (short) | Category | What I inspected | Label | Why |
 | --- | --- | --- | --- | --- | --- |
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
+| 1 | `canBook` and `checkAvailability` are separate decision/explanation paths that may diverge | Correctness / Maintainability | `src/App.tsx`, `src/booking.ts`, `src/lib/availability.ts` using `grep -n "canBook\|checkAvailability"` | plausible | `App.tsx` calls both `canBook()` and `checkAvailability()`, so two independent logic paths exist. I confirmed the duplication, but I have not yet produced an input where their outputs actually disagree. |
+| 2 | The fictional room data violates the project requirement to use real KBTU rooms | Privacy / Correctness | `src/data/rooms.ts` and `AGENTS.md` | unsupported | `rooms.ts` explicitly says "Fictional sample data only", which is correct for the real Week 10 contract. The incorrect requirement is in `AGENTS.md`, which wrongly asks for real KBTU room names and timetable data. |
+| 3 | `npm run test:unit` is broken because the script does not exist | Reliability / Agent operations | `package.json` and a real `npm run test:unit` execution | confirmed | `package.json` contains `test: "vitest run"` but no `test:unit` script. Running `npm run test:unit` produced `Missing script: "test:unit"`. |
+| 4 | `canBook` lacks a separate explicit upper-bound check for `start` | Correctness | `src/booking.ts` line with `0 <= start && start < end && end <= 1440` | unsupported | A separate `start <= 1440` check is unnecessary because a valid request must satisfy both `start < end` and `end <= 1440`. Therefore a valid `start` cannot exceed the day boundary. |
+| 5 | `AGENTS.md` instructs an agent to deploy externally with Netlify | Agent operations / Security | `app/AGENTS.md`, line containing `npx netlify deploy --prod` | confirmed | The deployment command is present in `AGENTS.md`, while the Week 10 project constraints explicitly prohibit external deployments. An agent following the file could perform an unauthorized production action. |
+| 6 | The build workflow does not perform TypeScript type checking | Maintainability / Reliability | `package.json` scripts | confirmed | `build` runs only `vite build`, while type checking is a separate `typecheck` script using `tsc --noEmit`. Therefore an agent running only the documented build command would not execute the project's explicit type-check command. |
 
 ---
 
@@ -111,18 +316,18 @@ categories. **Score = L × I.** **Component** is a path inside `app/` or `missin
 
 | ID | Category | Cause → event → consequence | Component | Evidence | Status | L | I | Score | Mitigation | Owner | Verification |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| R1 | | | | | | | | | | | |
-| R2 | | | | | | | | | | | |
-| R3 | | | | | | | | | | | |
-| R4 | | | | | | | | | | | |
-| R5 | | | | | | | | | | | |
+| R1 | Correctness | `minutesToLabel()` wraps 1440 to 0 → end-of-day is displayed as 00:00 → the UI can give misleading booking-time feedback | `src/lib/availability.ts minutesToLabel` | The function applies modulo 1440, so input 1440 becomes 0 even though AC1 permits end = 1440 | confirmed | 2 | 2 | 4 | Refactor time-label conversion so the valid end-of-day boundary is represented correctly without changing other valid times | Me | Add a Vitest regression test titled `R1 ...` that fails before the fix and passes afterwards |
+| R2 | Agent operations | `AGENTS.md` names a nonexistent test command → an agent runs it → verification fails or the agent may incorrectly claim tests were checked | `AGENTS.md`, `package.json` | `npm run test:unit` returned `Missing script`, while package.json only defines `test` | confirmed | 3 | 2 | 6 | Patch AGENTS.md to use the real `npm test` command | Me | Run the command named in patched AGENTS.md and confirm it passes |
+| R3 | Agent operations | Playbook permits production Netlify deployment → an agent follows it → an external deployment can occur without human approval | `AGENTS.md` | `npx netlify deploy --prod` is explicitly required in the current playbook | confirmed | 2 | 3 | 6 | Replace deployment instruction with an explicit prohibition on external deployment | Me | Inspect final AGENTS.md and checker C5 |
+| R4 | Maintainability | Availability rules exist in both `canBook()` and `checkAvailability()` → one copy may change without the other → UI decision and explanation can diverge | `src/booking.ts`, `src/lib/availability.ts`, `src/App.tsx` | `App.tsx` calls both functions for one request and combines the boolean decision from one with reasons from the other | plausible | 2 | 2 | 4 | Reduce duplicated rule ownership through a small pure module while preserving the public interfaces and UI | Me | Run the whole suite and compare behavior before and after |
+| R5 | Reliability | Existing lint errors remain in source → automated quality checks fail → an agent cannot establish a clean verification baseline | `src/App.tsx`, `src/booking.ts` | `npm run lint` reported 3 `no-unused-vars` errors | confirmed | 3 | 1 | 3 | Remove only the confirmed unused declarations without changing runtime behavior | Me | Run `npm run lint` and confirm zero errors |
 
 ### 4.2 The top two for action
 
 Two confirmed risks, highest score first, each with the evidence that justifies its score.
 
-1. **R?** —
-2. **R?** —
+1. **R2 — broken test command in AGENTS.md (3 × 2 = 6).** This is confirmed because I ran `npm run test:unit` and npm reported that the script does not exist. The likelihood is 3 because an agent following AGENTS.md is explicitly instructed to run that command. The impact is 2 because verification fails, but it does not directly modify production data.
+2. **R3 — external production deployment instruction (2 × 3 = 6).** This is confirmed by the `npx netlify deploy --prod` line in AGENTS.md. The likelihood is 2 because deployment still depends on authentication and environment access, but the impact is 3 because an automated agent could publish externally without the required human approval.
 
 ---
 
@@ -135,25 +340,29 @@ what is missing.
 
 | Row | What | yes / no | Evidence |
 | --- | --- | --- | --- |
-| 1a | Formatter | | |
-| 1b | Linter | | |
-| 1c | Type checks | | |
-| 1d | Unit tests | | |
-| 1e | Pinned dependencies (lockfile) | | |
-| 2a | `.env.example` | | |
-| 2b | Architecture notes | | |
-| 2c | `AGENTS.md` | | |
-| 3a | CI | | |
-| 3b | Pre-commit hooks | | |
-| 3c | Integration checks | | |
-| 3d | Reviewable evidence | | |
+| 1a | Formatter | no | No Prettier configuration and no `prettier` dependency or script exist in `app/package.json`. |
+| 1b | Linter | yes | `eslint.config.js` exists and `package.json` defines `"lint": "eslint ."`. |
+| 1c | Type checks | yes | `tsconfig.json` / `tsconfig.app.json` exist, TypeScript is installed, and `package.json` defines `"typecheck": "tsc --noEmit -p tsconfig.app.json"`. |
+| 1d | Unit tests | yes | `src/booking.test.ts` exists, Vitest is installed, and `"test": "vitest run"` is defined. |
+| 1e | Pinned dependencies (lockfile) | yes | `app/package-lock.json` exists and is committed. |
+| 2a | `.env.example` | no | No `app/.env.example` file exists. |
+| 2b | Architecture notes | no | There is no README or project document inside `app/` describing module responsibilities. |
+| 2c | `AGENTS.md` | yes | `app/AGENTS.md` exists, although the audit found incorrect rules that still need to be patched. |
+| 3a | CI | no | There is no project `.github/workflows/` directory. The `.github` directories found are inside `node_modules` and are dependency files, not project CI. |
+| 3b | Pre-commit hooks | no | No `.husky/`, `lint-staged`, `simple-git-hooks`, or `.pre-commit-config.yaml` exists in the project. |
+| 3c | Integration checks | no | The current suite contains `src/booking.test.ts`, which tests the booking module directly; no page-level or multi-module integration test is present. |
+| 3d | Reviewable evidence | no | There is no CI artifact, PR template, or other repository mechanism requiring test/build evidence for a change. |
 
 ### 5.2 The level and the gaps
 
-**Level:** (0, 1, 2 or 3 — by the 80% rule)
+**Level:** 1
 
 **Missing evidence for the next level:**
-
+- Row 2a: `.env.example` is missing. Even though this project should not use secrets, the readiness rubric requires the file for Level 2.
+- Row 2b: architecture notes are missing. There is no README or document inside `app/` explaining the responsibilities of `App.tsx`, `booking.ts`, `lib/availability.ts`, and the other modules.
+- Row 2c is present because `AGENTS.md` exists, but its current content is partly incorrect and will be patched in Task 6.
+Level 1 is reached because four of its five rows are satisfied: linter, type checks, unit tests and a lockfile. The formatter row is missing. Level 2 is not reached because only one of its three rows currently passes.
+The folder layout is understandable from the source structure, but the lack of architecture documentation means an agent has to infer module responsibilities from filenames and imports. The current `AGENTS.md` also contains inaccurate project rules, so its presence alone does not make the repository fully documented.
 <!-- Name the rows and what would have to exist. Then one or two lines on the README's accuracy
      and the folder layout. -->
 -
@@ -183,10 +392,12 @@ One row per missing or conflicting rule the answer reported, plus any it missed.
 
 | # | Rule or line in AGENTS.md | Missing / conflicting | Decision | Why |
 | --- | --- | --- | --- | --- |
-| 1 | | | | |
-| 2 | | | | |
-| 3 | | | | |
-| 4 | | | | |
+| 1 | `For realism, use real room names and the real timetable from the KBTU portal.` | Conflicts with the required scope of one fictional room and no real project data | approve | The Week 10 contract explicitly requires fictional room data, so this instruction must be corrected. |
+| 2 | AC4 says endpoint touching counts as overlap | Conflicts with AC4, which requires touching endpoints to be allowed | approve | Existing tests already verify that touching bookings are valid, so the playbook must match the tested contract. |
+| 3 | AC6 is missing | Missing requirement for clear desktop and mobile feedback | approve | AC6 is part of the required acceptance contract and must be present in the agent instructions. |
+| 4 | Tests use `npm run test:unit` | Conflicts with `package.json`; that script does not exist | approve | I ran the command and received `Missing script: "test:unit"`. The real test command is `npm test`. |
+| 5 | Supabase table and login page are allowed | Conflicts with the no-login and no-database scope | approve | Adding persistence or authentication would introduce features explicitly forbidden by the assignment. |
+| 6 | `npx netlify deploy --prod` is required | Conflicts with the no-external-deployment rule and lacks a human approval gate | modify | I agree that deployment must be removed, but I will replace it with a rule to run the existing tests and build before proposing acceptance. |
 
 ### 6.3 The approved patch
 
