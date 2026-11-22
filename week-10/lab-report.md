@@ -413,7 +413,7 @@ One row per missing or conflicting rule the answer reported, plus any it missed.
 
 ### 7.1 The regression test fails before the mitigation
 
-The risk it covers: **R?**. The real run, with the new test failing:
+The risk it covers: **R1**. The real run, with the new test failing:
 
 ```text
 (paste here)

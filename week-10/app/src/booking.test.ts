@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canBook, type CanBookInput, type BookingInterval } from './booking';
+import { minutesToLabel } from './lib/availability';
 
 const DEFAULT_NOW = 540;
 
@@ -200,3 +201,8 @@ describe('canBook Unit Tests', () => {
       expect(bookings).toEqual(before);
     });
   });
+  describe('Week 10 risk regression', () => {
+  it('R1 AC6: displays the valid end-of-day boundary 1440 as 24:00', () => {
+    expect(minutesToLabel(1440)).toBe('24:00');
+  });
+});
