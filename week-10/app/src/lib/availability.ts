@@ -1,7 +1,6 @@
 import type { Booking, CheckResult, Interval, Room } from "@/types";
 
 import {
-  labelToMinutes,
   minutesToLabel,
   MINUTES_PER_DAY,
 } from "./time";
@@ -11,6 +10,8 @@ export {
   minutesToLabel,
   MINUTES_PER_DAY,
 } from "./time";
+
+export const MAX_BOOKING_MINUTES = 120;
 
 
 /** Two intervals overlap when each starts strictly before the other ends. */
