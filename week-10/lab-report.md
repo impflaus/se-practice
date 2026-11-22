@@ -423,13 +423,14 @@ The risk it covers: **R1**. The real run, with the new test failing:
 
 | View | Width | What I checked | Result | Screenshot |
 | --- | --- | --- | --- | --- |
-| Desktop | | | | `evidence/ui-desktop.png` |
-| Mobile | | | | `evidence/ui-mobile.png` |
+| Desktop | 1440 px | Form layout, result feedback, room schedule, no clipping or overlapping elements | pass | `evidence/ui-desktop.png` |
+| Mobile | 390 px | Responsive stacking, readable controls and feedback, no horizontal overflow or overlapping elements | pass | `evidence/ui-mobile.png` |
 
 ### 7.3 Tests and checks I did not run
 
 <!-- Name each one and why. "None" only if it is true. -->
--
+- I did not run automated browser or end-to-end tests because this project does not include an E2E test setup.
+- I did not test additional browsers; the manual UI check was performed in Chrome.
 
 ---
 
@@ -437,23 +438,62 @@ The risk it covers: **R1**. The real run, with the new test failing:
 
 ### 8.1 The first mitigation
 
-**Risk:** R?
+**Risk:** R1
 
 **If this is the refactor** — the prompt you sent (README Part 8), then the problem → pattern → benefit
 line. Otherwise leave both empty.
 
 ```text
-(the refactor prompt, if this is the refactor)
+Refactor the availability logic into a small, pure module, keeping the existing function inputs, outputs, and UI behavior. Use a pattern only if the identified design problem justifies it. Do not add new features or dependencies. Show the files you plan to edit before making changes.
 ```
 
 **Problem → pattern → benefit:**
+The problem was that time-label conversion lived inside the larger availability module and incorrectly wrapped the valid end-of-day boundary `1440` to `00:00`.
+I used a small extracted pure module (`src/lib/time.ts`) rather than the Specification / Rule Engine pattern suggested by the assistant. This keeps time conversion isolated and testable, fixes the `24:00` boundary without changing the public UI imports, and avoids unnecessary architectural complexity.
 
 **What I rejected from the agent's patch, and why:**
+I rejected the proposed Specification / Rule Engine refactor because the confirmed R1 problem was only the time-label boundary and did not justify introducing a rule-engine abstraction. I kept the change minimal: extracted the pure time helpers and added the special case for `1440`.
 
 The diff I approved (`git diff`):
 
 ```text
-(paste here)
+diff --git a/week-10/app/src/lib/availability.ts b/week-10/app/src/lib/availability.ts
+index e14ad73..e45f25e 100644
+--- a/week-10/app/src/lib/availability.ts
++++ b/week-10/app/src/lib/availability.ts
+@@ -1,22 +1,17 @@
+ import type { Booking, CheckResult, Interval, Room } from "@/types";
+ 
+-export const MINUTES_PER_DAY = 1440;
+-export const MAX_BOOKING_MINUTES = 120;
++import {
++  labelToMinutes,
++  minutesToLabel,
++  MINUTES_PER_DAY,
++} from "./time";
+ 
+-/** minutes for a single day, with zero-padding. */
+-export function minutesToLabel(minutes: number): string {
+-  const m = ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+-  const h = Math.floor(m / 60);
+-  const mm = m % 60;
+-  return `${h.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")}`;
+-}
++export {
++  labelToMinutes,
++  minutesToLabel,
++  MINUTES_PER_DAY,
++} from "./time";
+ 
+-/** "HH:MM" -> minutes from 00:00. Returns null when malformed. */
+-export function labelToMinutes(label: string): number | null {
+-  const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(label.trim());
+-  if (!match) return null;
+-  return Number(match[1]) * 60 + Number(match[2]);
+-}
+ 
+ /** Two intervals overlap when each starts strictly before the other ends. */
+ export function overlaps(a: Interval, b: Interval): boolean {
 ```
 
 ### 8.2 The second mitigation

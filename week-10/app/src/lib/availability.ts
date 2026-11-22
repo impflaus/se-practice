@@ -1,22 +1,17 @@
 import type { Booking, CheckResult, Interval, Room } from "@/types";
 
-export const MINUTES_PER_DAY = 1440;
-export const MAX_BOOKING_MINUTES = 120;
+import {
+  labelToMinutes,
+  minutesToLabel,
+  MINUTES_PER_DAY,
+} from "./time";
 
-/** minutes for a single day, with zero-padding. */
-export function minutesToLabel(minutes: number): string {
-  const m = ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-  const h = Math.floor(m / 60);
-  const mm = m % 60;
-  return `${h.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")}`;
-}
+export {
+  labelToMinutes,
+  minutesToLabel,
+  MINUTES_PER_DAY,
+} from "./time";
 
-/** "HH:MM" -> minutes from 00:00. Returns null when malformed. */
-export function labelToMinutes(label: string): number | null {
-  const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(label.trim());
-  if (!match) return null;
-  return Number(match[1]) * 60 + Number(match[2]);
-}
 
 /** Two intervals overlap when each starts strictly before the other ends. */
 export function overlaps(a: Interval, b: Interval): boolean {
